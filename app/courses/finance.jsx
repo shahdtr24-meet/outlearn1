@@ -1,129 +1,127 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { addDoc, collection, doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
 import {
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { db } from "../../firebaseConfig";
 import colors from '../colors';
-import ProfileHeader from '../components/ProfileHeader';
+import ProfileHeader, { userAvatar, userName } from '../components/ProfileHeader';
 import Quiz from '../components/Quiz';
 
-const questions = [
+// --- LEVELS WITH 5 QUESTIONS EACH (for demo, questions are repeated/varied) ---
+const baseQuestions = [
   {
     question: "Which investment option would you choose?",
-    answers: [
-      "$15,000 with 10% interest rate",
-      "$10,000 with 15% interest rate"
-    ],
+    answers: ["$15,000 with 10% interest rate", "$10,000 with 15% interest rate"],
     correctAnswer: "$10,000 with 15% interest rate",
     explanation: "The second option yields $1,500 vs $1,500 from the first option, but requires less capital."
   },
   {
     question: "If you have $5,000 to invest, which option is better?",
-    answers: [
-      "5% guaranteed annual return",
-      "50% chance of 12% return, 50% chance of 0%"
-    ],
+    answers: ["5% guaranteed annual return", "50% chance of 12% return, 50% chance of 0%"],
     correctAnswer: "5% guaranteed annual return",
     explanation: "The expected value is the same (5%), but the guaranteed return has no risk."
   },
   {
     question: "You're offered two payment options for a $1,000 loan. Which is better?",
-    answers: [
-      "12% APR compounded annually",
-      "1% monthly simple interest"
-    ],
+    answers: ["12% APR compounded annually", "1% monthly simple interest"],
     correctAnswer: "12% APR compounded annually",
     explanation: "1% monthly equals 12% annually, but simple interest is better than compound for loans."
   },
   {
     question: "Which savings account would you choose?",
-    answers: [
-      "3% interest compounded monthly",
-      "3.1% interest compounded annually"
-    ],
+    answers: ["3% interest compounded monthly", "3.1% interest compounded annually"],
     correctAnswer: "3% interest compounded monthly",
     explanation: "Monthly compounding will yield more than annual compounding with similar rates."
   },
   {
     question: "For a $20,000 car loan, which is the better option?",
-    answers: [
-      "0% APR for 36 months",
-      "2% APR for 48 months with $1,000 cash back"
-    ],
+    answers: ["0% APR for 36 months", "2% APR for 48 months with $1,000 cash back"],
     correctAnswer: "0% APR for 36 months",
     explanation: "The total interest paid on the 2% loan would exceed the $1,000 cash back."
-  },
-  {
-    question: "Which investment strategy is better for long-term wealth building?",
-    answers: [
-      "Investing $200 monthly in a diversified portfolio",
-      "Saving to invest $2,400 at the end of each year"
-    ],
-    correctAnswer: "Investing $200 monthly in a diversified portfolio",
-    explanation: "Monthly investing takes advantage of dollar-cost averaging and compound interest."
-  },
-  {
-    question: "You have a chance to invest in a startup. Which option is better?",
-    answers: [
-      "10% ownership for $50,000",
-      "5% ownership for $20,000"
-    ],
-    correctAnswer: "5% ownership for $20,000",
-    explanation: "The second option values the company at $400k vs $500k, making it a better deal."
-  },
-  {
-    question: "Which retirement saving strategy is better?",
-    answers: [
-      "Contributing 6% with 100% employer match",
-      "Contributing 10% with no employer match"
-    ],
-    correctAnswer: "Contributing 6% with 100% employer match",
-    explanation: "The employer match doubles your contribution, making it effectively 12%."
-  },
-  {
-    question: "For an emergency fund, which option is better?",
-    answers: [
-      "High-yield savings account at 2% APY",
-      "Certificate of Deposit at 2.5% APY"
-    ],
-    correctAnswer: "High-yield savings account at 2% APY",
-    explanation: "Emergency funds should be easily accessible without penalties."
-  },
-  {
-    question: "Which debt should you pay off first?",
-    answers: [
-      "$5,000 credit card debt at 20% APR",
-      "$10,000 student loan at 5% APR"
-    ],
-    correctAnswer: "$5,000 credit card debt at 20% APR",
-    explanation: "Higher interest rate debt should be prioritized to minimize interest payments."
-  },
+  }
 ];
 
+const levels = Array.from({ length: 10 }, (_, i) => ({
+  id: i + 1,
+  questions: baseQuestions.map((q, idx) => ({
+    ...q,
+    question: `Level ${i + 1} - Q${idx + 1}: ${q.question}`
+  }))
+}));
+// --- END LEVELS ---
+
+const userId = userName; // For demo, use userName as userId
+
 export default function FinanceCourse() {
-  const [isQuizStarted, setIsQuizStarted] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState(null);
   const [quizResult, setQuizResult] = useState(null);
+  const [completedLevels, setCompletedLevels] = useState([]);
   const router = useRouter();
 
-  const handleQuizComplete = (result) => {
+  // Real-time listener for progress
+  useEffect(() => {
+    const progressRef = doc(db, "users", userId);
+    const unsubscribe = onSnapshot(progressRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setCompletedLevels(docSnap.data().financeProgress || []);
+      } else {
+        setCompletedLevels([]);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  const handleQuizComplete = async (result) => {
     setQuizResult(result);
+    if (result.success && selectedLevel) {
+      // Update progress in Firestore
+      const progressRef = doc(db, "users", userId);
+      const docSnap = await getDoc(progressRef);
+      let newCompleted = [];
+      if (docSnap.exists()) {
+        const prev = docSnap.data().financeProgress || [];
+        newCompleted = prev.includes(selectedLevel) ? prev : [...prev, selectedLevel];
+      } else {
+        newCompleted = [selectedLevel];
+      }
+      await setDoc(progressRef, { financeProgress: newCompleted }, { merge: true });
+      // Post to community
+      await addDoc(collection(db, "posts"), {
+        user: userName,
+        avatar: userAvatar,
+        content: `Just completed level ${selectedLevel} of the Financial Management course! 🎉`,
+        likes: 0,
+        time: "Just now",
+        createdAt: new Date()
+      });
+    }
   };
 
   const handleTryAgain = () => {
     setQuizResult(null);
-    setIsQuizStarted(true);
   };
 
-  const handleBackToCourses = () => {
-    router.back();
+  const handleBackToLevels = () => {
+    setQuizResult(null);
+    setSelectedLevel(null);
   };
+
+  // Add this function to handle going back to Courses
+  const handleBackToCourses = () => {
+    router.push("/courses");
+  };
+
+  // Progress calculation
+  const progressPercent = Math.round((completedLevels.length / levels.length) * 100);
 
   if (quizResult) {
     return (
@@ -141,7 +139,7 @@ export default function FinanceCourse() {
               {quizResult.success ? 'Congratulations!' : 'Try Again!'}
             </Text>
             <Text style={styles.resultScore}>
-              Score: {quizResult.score}/10
+              Score: {quizResult.score}/5
             </Text>
             <TouchableOpacity
               style={styles.button}
@@ -151,10 +149,10 @@ export default function FinanceCourse() {
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.button, styles.secondaryButton]}
-              onPress={handleBackToCourses}
+              onPress={handleBackToLevels}
             >
               <Text style={[styles.buttonText, styles.secondaryButtonText]}>
-                Back to Courses
+                Back to Levels
               </Text>
             </TouchableOpacity>
           </View>
@@ -163,15 +161,28 @@ export default function FinanceCourse() {
     );
   }
 
-  if (isQuizStarted) {
+  if (selectedLevel) {
+    const levelObj = levels.find(l => l.id === selectedLevel);
     return (
       <SafeAreaView style={styles.container}>
         <StatusBar barStyle="light-content" />
         <ProfileHeader />
         <Quiz
-          questions={questions}
+          questions={levelObj.questions}
           onComplete={handleQuizComplete}
         />
+        <TouchableOpacity
+          style={[styles.button, styles.leaveButton]}
+          onPress={handleBackToLevels}
+        >
+          <Text style={[styles.buttonText, styles.leaveButtonText]}>Leave Level</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.button, styles.secondaryButton]}
+          onPress={handleBackToCourses}
+        >
+          <Text style={[styles.buttonText, styles.secondaryButtonText]}>Back to Courses</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
@@ -189,31 +200,53 @@ export default function FinanceCourse() {
             <MaterialIcons name="attach-money" size={48} color={colors.primary} />
             <Text style={styles.courseTitle}>Financial Management</Text>
             <Text style={styles.courseDescription}>
-              Test your knowledge of financial concepts and decision-making skills.
+              Complete all 10 levels to master financial management!
             </Text>
           </View>
-          
-          <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
-              <MaterialIcons name="help-outline" size={24} color={colors.primary} />
-              <Text style={styles.infoText}>10 Questions</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <MaterialIcons name="favorite" size={24} color={colors.primary} />
-              <Text style={styles.infoText}>3 Hearts</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <MaterialIcons name="timer" size={24} color={colors.primary} />
-              <Text style={styles.infoText}>No Time Limit</Text>
-            </View>
-          </View>
-
           <TouchableOpacity
-            style={styles.startButton}
-            onPress={() => setIsQuizStarted(true)}
+            style={[styles.button, styles.secondaryButton, { alignSelf: 'center', marginBottom: 16 }]}
+            onPress={handleBackToCourses}
           >
-            <Text style={styles.startButtonText}>Start Quiz</Text>
+            <Text style={[styles.buttonText, styles.secondaryButtonText]}>Back to Courses</Text>
           </TouchableOpacity>
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill,
+                  { width: `${progressPercent}%` }
+                ]} 
+              />
+              {/* Add a gray background for the rest of the bar */}
+              <View
+                style={[
+                  StyleSheet.absoluteFill,
+                  { backgroundColor: colors.border, width: '100%', zIndex: -1 }
+                ]}
+              />
+            </View>
+            <Text style={styles.progressText}>{progressPercent}% completed</Text>
+          </View>
+          <Text style={styles.levelsTitle}>Levels</Text>
+          {levels.map((level) => {
+            const isCompleted = completedLevels.includes(level.id);
+            return (
+              <TouchableOpacity
+                key={level.id}
+                style={[
+                  styles.levelCard,
+                  isCompleted && styles.levelCardCompleted
+                ]}
+                onPress={() => setSelectedLevel(level.id)}
+                disabled={isCompleted && false /* allow redo if failed */}
+              >
+                <Text style={styles.levelText}>Level {level.id}</Text>
+                {isCompleted && (
+                  <MaterialIcons name="check" size={20} color={colors.success} />
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -232,60 +265,78 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   courseHeader: {
-    alignItems: 'center',
-    marginBottom: 24,
+    alignItems: "center",
+    marginBottom: 16,
   },
   courseTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: "bold",
     color: colors.text,
-    marginTop: 12,
-    marginBottom: 8,
+    marginTop: 8,
   },
   courseDescription: {
-    fontSize: 16,
+    fontSize: 15,
     color: colors.textLight,
-    textAlign: 'center',
-    paddingHorizontal: 32,
+    marginTop: 4,
+    textAlign: "center",
   },
-  infoCard: {
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 24,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+  progressContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
   },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
+  progressBar: {
+    flex: 1,
+    height: 10,
+    backgroundColor: colors.border,
+    borderRadius: 5,
+    overflow: "hidden",
+    marginRight: 12,
   },
-  infoText: {
-    fontSize: 16,
-    color: colors.text,
-    marginLeft: 12,
-  },
-  startButton: {
+  progressFill: {
+    height: "100%",
     backgroundColor: colors.primary,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
+    borderRadius: 5,
   },
-  startButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
+  progressText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: colors.textLight,
+    width: 80,
+  },
+  levelsTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: colors.text,
+    marginBottom: 8,
+  },
+  levelCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.card,
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 10,
+    elevation: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+  },
+  levelCardCompleted: {
+    backgroundColor: colors.success,
+    opacity: 0.6,
+  },
+  levelText: {
+    fontSize: 15,
+    color: colors.text,
+    flex: 1,
   },
   resultCard: {
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 24,
-    margin: 16,
-    alignItems: 'center',
+    alignItems: "center",
     elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -293,36 +344,45 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   resultTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginTop: 16,
+    fontSize: 20,
+    fontWeight: "bold",
+    marginTop: 12,
     marginBottom: 8,
+    color: colors.text,
   },
   resultScore: {
-    fontSize: 18,
+    fontSize: 16,
     color: colors.textLight,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   button: {
     backgroundColor: colors.primary,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 12,
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    marginTop: 10,
+    marginBottom: 6,
   },
   buttonText: {
-    color: 'white',
+    color: "white",
+    fontWeight: "bold",
     fontSize: 16,
-    fontWeight: '600',
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
+    backgroundColor: colors.card,
+    borderWidth: 1,
     borderColor: colors.primary,
   },
   secondaryButtonText: {
     color: colors.primary,
+  },
+  leaveButton: {
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.error || '#e74c3c',
+    marginTop: 10,
+  },
+  leaveButtonText: {
+    color: colors.error || '#e74c3c',
   },
 }); 

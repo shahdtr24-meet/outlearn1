@@ -1,17 +1,19 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
+import { doc, onSnapshot } from "firebase/firestore";
+import React, { useEffect, useState } from "react";
 import {
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { db } from '../../firebaseConfig';
 import colors from '../colors';
-import ProfileHeader from '../components/ProfileHeader';
+import ProfileHeader, { userName } from '../components/ProfileHeader';
 
 const courses = [
   {
@@ -19,29 +21,43 @@ const courses = [
     title: 'Financial Management',
     icon: 'attach-money',
     description: 'Learn about interest rates, investments, and financial decision making',
-    progress: 30,
     color: '#2ecc71',
+    levels: 10,
   },
   {
     id: 'dilemma',
     title: 'Dilemma Management',
     icon: 'psychology',
     description: 'Master the art of handling complex decisions and ethical dilemmas',
-    progress: 0,
     color: '#e74c3c',
+    levels: 1,
   },
   {
     id: 'social',
     title: 'Social Skills',
     icon: 'groups',
     description: 'Improve your communication and interpersonal relationships',
-    progress: 0,
     color: '#3498db',
+    levels: 1,
   },
 ];
 
 export default function CoursesScreen() {
   const router = useRouter();
+  const [financeProgress, setFinanceProgress] = useState(0);
+
+  useEffect(() => {
+    const progressRef = doc(db, "users", userName);
+    const unsubscribe = onSnapshot(progressRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const completed = docSnap.data().financeProgress || [];
+        setFinanceProgress(completed.length);
+      } else {
+        setFinanceProgress(0);
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -58,32 +74,40 @@ export default function CoursesScreen() {
             <Text style={styles.sectionTitle}>Available Courses</Text>
           </View>
           
-          {courses.map((course) => (
-            <TouchableOpacity
-              key={course.id}
-              style={styles.courseCard}
-              onPress={() => router.push(`/courses/${course.id}`)}
-            >
-              <View style={[styles.courseIconContainer, { backgroundColor: course.color }]}>
-                <MaterialIcons name={course.icon} size={32} color="white" />
-              </View>
-              <View style={styles.courseContent}>
-                <Text style={styles.courseTitle}>{course.title}</Text>
-                <Text style={styles.courseDescription}>{course.description}</Text>
-                <View style={styles.progressContainer}>
-                  <View style={styles.progressBar}>
-                    <View 
-                      style={[
-                        styles.progressFill,
-                        { width: `${course.progress}%`, backgroundColor: course.color }
-                      ]} 
-                    />
-                  </View>
-                  <Text style={styles.progressText}>{course.progress}%</Text>
+          {courses.map((course) => {
+            let progress = 0;
+            if (course.id === 'finance') {
+              progress = Math.round((financeProgress / course.levels) * 100);
+            } else {
+              progress = 0;
+            }
+            return (
+              <TouchableOpacity
+                key={course.id}
+                style={styles.courseCard}
+                onPress={() => router.push(`/courses/${course.id}`)}
+              >
+                <View style={[styles.courseIconContainer, { backgroundColor: course.color }]}>
+                  <MaterialIcons name={course.icon} size={32} color="white" />
                 </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+                <View style={styles.courseContent}>
+                  <Text style={styles.courseTitle}>{course.title}</Text>
+                  <Text style={styles.courseDescription}>{course.description}</Text>
+                  <View style={styles.progressContainer}>
+                    <View style={styles.progressBar}>
+                      <View 
+                        style={[
+                          styles.progressFill,
+                          { width: `${progress}%`, backgroundColor: course.color }
+                        ]} 
+                      />
+                    </View>
+                    <Text style={styles.progressText}>{progress}%</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>

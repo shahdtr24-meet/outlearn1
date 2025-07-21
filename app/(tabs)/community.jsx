@@ -1,5 +1,5 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -12,39 +12,105 @@ import {
 } from "react-native";
 import colors from '../colors';
 import ProfileHeader from '../components/ProfileHeader';
+// Firestore imports
+import { addDoc, collection, doc, increment, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from "firebase/firestore";
+import { db } from '../../firebaseConfig';
+
+// Utility function to format time ago
+function timeAgo(date) {
+  const now = new Date();
+  const seconds = Math.floor((now - date) / 1000);
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 export default function CommunityScreen() {
-  const [posts, setPosts] = useState([
-    { id: "1", user: "Alice Chen", avatar: "A", content: "Just completed a breathing course! 🎉", likes: 12, time: "2h ago" },
-    { id: "2", user: "Robert Kim", avatar: "R", content: "Looking for teammates on the new project challenge. Anyone interested?", likes: 8, time: "4h ago" },
-    { id: "3", user: "Sophia Lee", avatar: "S", content: "Just discovered a great resource for learning skills on Youtube. Highly recommend!", likes: 15, time: "6h ago" },
-    { id: "4", user: "David Wang", avatar: "D", content: "Anyone attending the upcoming skills workshop next weekend?", likes: 5, time: "1d ago" },
-  ]);
+  const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState("");
+  
+  // Real-time listener for posts
+  useEffect(() => {
+    const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const fetchedPosts = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+        };
+      });
+      setPosts(fetchedPosts);
+      // Seed logic: if no posts, add 3 random posts from 3 users
+      if (fetchedPosts.length === 0) {
+        const seedUsers = [
+          {
+            user: "Alice Chen",
+            avatar: "A",
+            sentences: [
+              "Just completed a breathing course! 🎉",
+              "Excited to start a new project with the community!",
+              "Anyone up for a weekend study session?"
+            ]
+          },
+          {
+            user: "Robert Kim",
+            avatar: "R",
+            sentences: [
+              "Looking for teammates on the new project challenge. Anyone interested?",
+              "Shared a great resource for learning skills on Youtube!",
+              "Does anyone have tips for time management?"
+            ]
+          },
+          {
+            user: "Sophia Lee",
+            avatar: "S",
+            sentences: [
+              "Just discovered a great resource for learning skills on Youtube. Highly recommend!",
+              "Finished my first course today! Feeling accomplished.",
+              "Who else is attending the upcoming skills workshop?"
+            ]
+          }
+        ];
+        for (const user of seedUsers) {
+          const randomSentence = user.sentences[Math.floor(Math.random() * user.sentences.length)];
+          const randomLikes = Math.floor(Math.random() * 16) + 5; // 5-20 likes
+          await addDoc(collection(db, "posts"), {
+            user: user.user,
+            avatar: user.avatar,
+            content: randomSentence,
+            likes: randomLikes,
+            createdAt: serverTimestamp()
+          });
+        }
+      }
+    });
+    return unsubscribe;
+  }, []);
 
-  const addPost = () => {
+  const addPost = async () => {
     if (newPost.trim() !== "") {
-      setPosts([
-        { 
-          id: Date.now().toString(), 
-          user: "Matar", 
-          avatar: "M",
-          content: newPost, 
-          likes: 0, 
-          time: "Just now" 
-        }, 
-        ...posts
-      ]);
+      await addDoc(collection(db, "posts"), {
+        user: "Matar",
+        avatar: "M",
+        content: newPost,
+        likes: 0,
+        createdAt: serverTimestamp()
+      });
       setNewPost("");
     }
   };
 
-  const likePost = (id) => {
-    setPosts(
-      posts.map((post) =>
-        post.id === id ? { ...post, likes: post.likes + 1 } : post
-      )
-    );
+  const likePost = async (id, currentLikes) => {
+    const postRef = doc(db, "posts", id);
+    await updateDoc(postRef, {
+      likes: increment(1)
+    });
   };
   
   return (
@@ -91,13 +157,13 @@ export default function CommunityScreen() {
                 </View>
                 <View style={styles.postHeaderInfo}>
                   <Text style={styles.postUsername}>{post.user}</Text>
-                  <Text style={styles.postTime}>{post.time}</Text>
+                  <Text style={styles.postTime}>{timeAgo(post.createdAt)}</Text>
                 </View>
               </View>
               <Text style={styles.postContent}>{post.content}</Text>
               <TouchableOpacity 
                 style={styles.likeButton}
-                onPress={() => likePost(post.id)}
+                onPress={() => likePost(post.id, post.likes)}
               >
                 <MaterialIcons name="favorite" size={20} color={colors.primary} />
                 <Text style={styles.likeCount}>{post.likes}</Text>

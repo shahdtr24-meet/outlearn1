@@ -1,31 +1,101 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { router } from 'expo-router';
+import { signOut, updateProfile } from 'firebase/auth';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { auth, db } from '../../firebaseConfig';
 import colors from '../colors';
 
 export default function ProfileHeader() {
+  const [displayName, setDisplayName] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [points, setPoints] = useState(0);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (auth.currentUser) {
+        const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+        if (userDoc.exists()) {
+          setDisplayName(userDoc.data().displayName || 'User');
+        } else {
+          setDisplayName(auth.currentUser.email);
+        }
+      }
+      setLoading(false);
+    };
+    fetchUser();
+  }, []);
+
+  const handleSave = async () => {
+    if (auth.currentUser && inputValue.trim()) {
+      await updateProfile(auth.currentUser, { displayName: inputValue });
+      await updateDoc(doc(db, 'users', auth.currentUser.uid), { displayName: inputValue });
+      setDisplayName(inputValue);
+      setEditing(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      router.replace('/login'); // This will take you to the root (index) page
+    } catch (error) {
+      console.error("Sign out failed:", error);
+    }
+  };
+
+  if (loading) {
+    return <ActivityIndicator color="#fff" style={{ margin: 20 }} />;
+  }
+
   return (
     <View style={styles.header}>
       <View style={styles.headerContent}>
         <View style={styles.headerLeft}>
           <View style={styles.profilePhoto}>
-            <Text style={styles.profilePhotoText}>M</Text>
+            <Text style={styles.profilePhotoText}>{displayName ? displayName[0].toUpperCase() : 'U'}</Text>
           </View>
           <View>
-            <Text style={styles.headerName}>Matar</Text>
-            <Text style={styles.headerSubtitle}>Level 5 </Text>
+            {editing ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TextInput
+                  style={styles.input}
+                  value={inputValue}
+                  onChangeText={setInputValue}
+                  placeholder="Enter name"
+                  placeholderTextColor="#fff"
+                />
+                <TouchableOpacity onPress={handleSave} style={{ marginLeft: 8 }}>
+                  <MaterialIcons name="check" size={22} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setEditing(false)} style={{ marginLeft: 4 }}>
+                  <MaterialIcons name="close" size={22} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity onPress={() => { setInputValue(displayName); setEditing(true); }}>
+                <Text style={styles.headerName}>{displayName}</Text>
+              </TouchableOpacity>
+            )}
+            <Text style={styles.headerSubtitle}>Level 1</Text>
           </View>
         </View>
-        
         <View style={styles.pointsBadge}>
           <MaterialIcons name="local-fire-department" size={20} color="white" />
-          <Text style={styles.pointsText}>24</Text>
+          <Text style={styles.pointsText}>{points}</Text>
         </View>
+        <TouchableOpacity onPress={handleSignOut} style={styles.signOutBtn}>
+          <MaterialIcons name="logout" size={22} color="#fff" />
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
+// Styles remain unchanged
 const styles = StyleSheet.create({
   header: {
     paddingTop: 10,
@@ -81,4 +151,22 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontSize: 16,
   },
-}); 
+  input: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    color: '#fff',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    minWidth: 80,
+    fontSize: 16,
+  },
+  signOutBtn: {
+    marginLeft: 16,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: 20,
+    padding: 6,
+  },
+});
+
+export const userName = "Matar";
+export const userAvatar = "M";
