@@ -17,11 +17,17 @@ const LoginScreen = () => {
     try {
       if (isSignup) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        // Add user to Firestore
+        // Add user to Firestore with comprehensive profile
         await setDoc(doc(db, 'users', userCredential.user.uid), {
           email: userCredential.user.email,
           displayName: 'New User',
+          points: 0,
+          level: 1,
+          financeProgress: [],
+          completedCourses: [],
+          achievements: [],
           createdAt: new Date().toISOString(),
+          lastActive: new Date().toISOString(),
         });
       } else {
         await signInWithEmailAndPassword(auth, email, password);

@@ -1,6 +1,6 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { addDoc, collection, doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import {
   SafeAreaView,
@@ -12,8 +12,10 @@ import {
   View,
 } from "react-native";
 import { db } from "../../firebaseConfig";
+import { useAuth } from "../../hooks/useAuth";
+import { UserService } from "../../services/userService";
 import colors from '../colors';
-import ProfileHeader, { userAvatar, userName } from '../components/ProfileHeader';
+import ProfileHeader from '../components/ProfileHeader';
 import Quiz from '../components/Quiz';
 
 // --- LEVELS WITH 5 QUESTIONS EACH (for demo, questions are repeated/varied) ---
@@ -59,9 +61,8 @@ const levels = Array.from({ length: 10 }, (_, i) => ({
 }));
 // --- END LEVELS ---
 
-const userId = userName; // For demo, use userName as userId
-
 export default function FinanceCourse() {
+  const { userId, userProfile } = useAuth();
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [quizResult, setQuizResult] = useState(null);
   const [completedLevels, setCompletedLevels] = useState([]);
@@ -69,40 +70,38 @@ export default function FinanceCourse() {
 
   // Real-time listener for progress
   useEffect(() => {
-    const progressRef = doc(db, "users", userId);
-    const unsubscribe = onSnapshot(progressRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setCompletedLevels(docSnap.data().financeProgress || []);
-      } else {
-        setCompletedLevels([]);
-      }
-    });
-    return unsubscribe;
-  }, []);
+    if (userId) {
+      const progressRef = doc(db, "users", userId);
+      const unsubscribe = onSnapshot(progressRef, (docSnap) => {
+        if (docSnap.exists()) {
+          setCompletedLevels(docSnap.data().financeProgress || []);
+        } else {
+          setCompletedLevels([]);
+        }
+      });
+      return unsubscribe;
+    }
+  }, [userId]);
 
   const handleQuizComplete = async (result) => {
     setQuizResult(result);
-    if (result.success && selectedLevel) {
-      // Update progress in Firestore
-      const progressRef = doc(db, "users", userId);
-      const docSnap = await getDoc(progressRef);
-      let newCompleted = [];
-      if (docSnap.exists()) {
-        const prev = docSnap.data().financeProgress || [];
-        newCompleted = prev.includes(selectedLevel) ? prev : [...prev, selectedLevel];
-      } else {
-        newCompleted = [selectedLevel];
+    if (result.success && selectedLevel && userId) {
+      try {
+        // Update progress using UserService
+        const progressResult = await UserService.updateCourseProgress(userId, 'finance', selectedLevel);
+        
+        if (progressResult.success) {
+          // Create community post
+          const displayName = userProfile?.displayName || 'User';
+          await UserService.createCommunityPost(
+            userId,
+            displayName,
+            `Just completed level ${selectedLevel} of the Financial Management course! 🎉`
+          );
+        }
+      } catch (error) {
+        console.error('Error updating progress:', error);
       }
-      await setDoc(progressRef, { financeProgress: newCompleted }, { merge: true });
-      // Post to community
-      await addDoc(collection(db, "posts"), {
-        user: userName,
-        avatar: userAvatar,
-        content: `Just completed level ${selectedLevel} of the Financial Management course! 🎉`,
-        likes: 0,
-        time: "Just now",
-        createdAt: new Date()
-      });
     }
   };
 

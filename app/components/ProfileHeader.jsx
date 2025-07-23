@@ -1,39 +1,27 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from 'expo-router';
 import { signOut, updateProfile } from 'firebase/auth';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
+import { doc, updateDoc } from 'firebase/firestore';
+import React, { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
+import { useAuth } from '../../hooks/useAuth';
+import { UserService } from '../../services/userService';
 import colors from '../colors';
 
 export default function ProfileHeader() {
-  const [displayName, setDisplayName] = useState('');
+  const { user, userProfile, loading } = useAuth();
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [points, setPoints] = useState(0);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (auth.currentUser) {
-        const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
-        if (userDoc.exists()) {
-          setDisplayName(userDoc.data().displayName || 'User');
-        } else {
-          setDisplayName(auth.currentUser.email);
-        }
-      }
-      setLoading(false);
-    };
-    fetchUser();
-  }, []);
+  const displayName = userProfile?.displayName || user?.email || 'User';
+  const points = userProfile?.points || 0;
+  const level = UserService.calculateLevel(points);
 
   const handleSave = async () => {
-    if (auth.currentUser && inputValue.trim()) {
-      await updateProfile(auth.currentUser, { displayName: inputValue });
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), { displayName: inputValue });
-      setDisplayName(inputValue);
+    if (user && inputValue.trim()) {
+      await updateProfile(user, { displayName: inputValue });
+      await updateDoc(doc(db, 'users', user.uid), { displayName: inputValue });
       setEditing(false);
     }
   };
@@ -80,7 +68,7 @@ export default function ProfileHeader() {
                 <Text style={styles.headerName}>{displayName}</Text>
               </TouchableOpacity>
             )}
-            <Text style={styles.headerSubtitle}>Level 1</Text>
+            <Text style={styles.headerSubtitle}>Level {level}</Text>
           </View>
         </View>
         <View style={styles.pointsBadge}>

@@ -1,10 +1,12 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from 'expo-router';
+import { AuthProvider } from '../../hooks/useAuth';
 import colors from '../colors';
 
 export default function TabLayout() {
   return (
-    <Tabs
+    <AuthProvider>
+      <Tabs
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
@@ -53,6 +55,7 @@ export default function TabLayout() {
           title: 'Community',
         }}
       />
-    </Tabs>
+      </Tabs>
+    </AuthProvider>
   );
 } 
