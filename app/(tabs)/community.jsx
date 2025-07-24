@@ -10,10 +10,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useAuth } from '../../hooks/useAuth';
+import { UserService } from '../../services/userService';
 import colors from '../colors';
 import ProfileHeader from '../components/ProfileHeader';
 // Firestore imports
-import { addDoc, collection, doc, increment, onSnapshot, orderBy, query, serverTimestamp, updateDoc } from "firebase/firestore";
+import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp } from "firebase/firestore";
 import { db } from '../../firebaseConfig';
 
 // Utility function to format time ago
@@ -30,6 +32,7 @@ function timeAgo(date) {
 }
 
 export default function CommunityScreen() {
+  const { userId, userProfile } = useAuth();
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState("");
   
@@ -94,23 +97,25 @@ export default function CommunityScreen() {
   }, []);
 
   const addPost = async () => {
-    if (newPost.trim() !== "") {
-      await addDoc(collection(db, "posts"), {
-        user: "Matar",
-        avatar: "M",
-        content: newPost,
-        likes: 0,
-        createdAt: serverTimestamp()
-      });
-      setNewPost("");
+    if (newPost.trim() !== "" && userId) {
+      try {
+        const displayName = userProfile?.displayName || 'User';
+        await UserService.createCommunityPost(userId, displayName, newPost);
+        setNewPost("");
+      } catch (error) {
+        console.error('Error creating post:', error);
+      }
     }
   };
 
-  const likePost = async (id, currentLikes) => {
-    const postRef = doc(db, "posts", id);
-    await updateDoc(postRef, {
-      likes: increment(1)
-    });
+  const likePost = async (postId) => {
+    if (userId) {
+      try {
+        await UserService.togglePostLike(postId, userId);
+      } catch (error) {
+        console.error('Error toggling like:', error);
+      }
+    }
   };
   
   return (
@@ -163,7 +168,7 @@ export default function CommunityScreen() {
               <Text style={styles.postContent}>{post.content}</Text>
               <TouchableOpacity 
                 style={styles.likeButton}
-                onPress={() => likePost(post.id, post.likes)}
+                onPress={() => likePost(post.id)}
               >
                 <MaterialIcons name="favorite" size={20} color={colors.primary} />
                 <Text style={styles.likeCount}>{post.likes}</Text>
