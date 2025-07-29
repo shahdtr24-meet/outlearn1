@@ -65,14 +65,26 @@ export default function FinanceCourse() {
   useEffect(() => {
     if (userId) {
       const progressRef = doc(db, "users", userId);
-      const unsubscribe = onSnapshot(progressRef, (docSnap) => {
-        if (docSnap.exists()) {
-          // Always convert to numbers!
-          setCompletedLevels((docSnap.data().financeProgress || []).map(Number));
-        } else {
+      const unsubscribe = onSnapshot(
+        progressRef, 
+        (docSnap) => {
+          try {
+            if (docSnap.exists()) {
+              // Always convert to numbers!
+              setCompletedLevels((docSnap.data().financeProgress || []).map(Number));
+            } else {
+              setCompletedLevels([]);
+            }
+          } catch (error) {
+            console.error('Error processing progress data:', error);
+            setCompletedLevels([]);
+          }
+        },
+        (error) => {
+          console.error('Error listening to progress:', error);
           setCompletedLevels([]);
         }
-      });
+      );
       return unsubscribe;
     }
   }, [userId]);

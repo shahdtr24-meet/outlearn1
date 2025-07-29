@@ -12,32 +12,51 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
-      setUser(authUser);
+      try {
+        setUser(authUser);
 
-      if (authUser) {
-        // Listen to user profile changes in real-time
-        const unsubscribeProfile = onSnapshot(
-          doc(db, 'users', authUser.uid),
-          (doc) => {
-            if (doc.exists()) {
-              setUserProfile({ id: doc.id, ...doc.data() });
-            } else {
+        if (authUser) {
+          // Listen to user profile changes in real-time
+          const unsubscribeProfile = onSnapshot(
+            doc(db, 'users', authUser.uid),
+            (doc) => {
+              try {
+                if (doc.exists()) {
+                  setUserProfile({ id: doc.id, ...doc.data() });
+                } else {
+                  setUserProfile(null);
+                }
+                setLoading(false);
+              } catch (error) {
+                console.error('Error processing user profile:', error);
+                setUserProfile(null);
+                setLoading(false);
+              }
+            },
+            (error) => {
+              console.error('Error fetching user profile:', error);
               setUserProfile(null);
+              setLoading(false);
             }
-            setLoading(false);
-          },
-          (error) => {
-            console.error('Error fetching user profile:', error);
-            setLoading(false);
-          }
-        );
+          );
 
-        // Clean up profile listener when user logs out
-        return unsubscribeProfile;
-      } else {
+          // Clean up profile listener when user logs out
+          return unsubscribeProfile;
+        } else {
+          setUserProfile(null);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error in auth state change:', error);
+        setUser(null);
         setUserProfile(null);
         setLoading(false);
       }
+    }, (error) => {
+      console.error('Auth state change error:', error);
+      setUser(null);
+      setUserProfile(null);
+      setLoading(false);
     });
 
     // Clean up auth listener on unmount
