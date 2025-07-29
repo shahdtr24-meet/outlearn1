@@ -38,16 +38,20 @@ export default function CommunityScreen() {
   
   // Real-time listener for posts
   useEffect(() => {
+    if (!userId) return;
+    
     const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const fetchedPosts = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
-        };
-      });
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        try {
+          const fetchedPosts = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+            };
+          });
       setPosts(fetchedPosts);
       // Seed logic: if no posts, add 3 random posts from 3 users
       if (fetchedPosts.length === 0) {
@@ -80,21 +84,36 @@ export default function CommunityScreen() {
             ]
           }
         ];
-        for (const user of seedUsers) {
-          const randomSentence = user.sentences[Math.floor(Math.random() * user.sentences.length)];
-          const randomLikes = Math.floor(Math.random() * 16) + 5; // 5-20 likes
-          await addDoc(collection(db, "posts"), {
-            user: user.user,
-            avatar: user.avatar,
-            content: randomSentence,
-            likes: randomLikes,
-            createdAt: serverTimestamp()
-          });
-        }
+        // Use Promise.all to handle async operations properly
+        Promise.all(
+          seedUsers.map(async (user) => {
+            const randomSentence = user.sentences[Math.floor(Math.random() * user.sentences.length)];
+            const randomLikes = Math.floor(Math.random() * 16) + 5; // 5-20 likes
+            return addDoc(collection(db, "posts"), {
+              user: user.user,
+              avatar: user.avatar,
+              content: randomSentence,
+              likes: randomLikes,
+              createdAt: serverTimestamp()
+            });
+          })
+        ).catch(error => {
+          console.error('Error seeding posts:', error);
+        });
       }
-    });
-    return unsubscribe;
-  }, []);
+    } catch (error) {
+      console.error('Error processing posts snapshot:', error);
+      setPosts([]); // Set empty array on error
+    }
+  },
+  (error) => {
+    console.error('Error listening to posts:', error);
+    setPosts([]); // Set empty array on error
+  }
+);
+
+return unsubscribe;
+}, [userId]);
 
   const addPost = async () => {
     if (newPost.trim() !== "" && userId) {

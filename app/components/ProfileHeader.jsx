@@ -20,9 +20,14 @@ export default function ProfileHeader() {
 
   const handleSave = async () => {
     if (user && inputValue.trim()) {
-      await updateProfile(user, { displayName: inputValue });
-      await updateDoc(doc(db, 'users', user.uid), { displayName: inputValue });
-      setEditing(false);
+      try {
+        await updateProfile(user, { displayName: inputValue });
+        await updateDoc(doc(db, 'users', user.uid), { displayName: inputValue });
+        setEditing(false);
+      } catch (error) {
+        console.error('Error updating profile:', error);
+        setEditing(false);
+      }
     }
   };
 
