@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (authUser) => {
       setUser(authUser);
-      
+
       if (authUser) {
         // Listen to user profile changes in real-time
         const unsubscribeProfile = onSnapshot(
@@ -31,7 +31,8 @@ export function AuthProvider({ children }) {
             setLoading(false);
           }
         );
-        
+
+        // Clean up profile listener when user logs out
         return unsubscribeProfile;
       } else {
         setUserProfile(null);
@@ -39,6 +40,7 @@ export function AuthProvider({ children }) {
       }
     });
 
+    // Clean up auth listener on unmount
     return unsubscribeAuth;
   }, []);
 

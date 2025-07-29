@@ -2,7 +2,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { router } from 'expo-router';
 import { signOut, updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { auth, db } from '../../firebaseConfig';
 import { useAuth } from '../../hooks/useAuth';
@@ -29,7 +29,7 @@ export default function ProfileHeader() {
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      router.replace('/login'); // This will take you to the root (index) page
+      router.replace('/welcome'); // This will take you to the root (index) page
     } catch (error) {
       console.error("Sign out failed:", error);
     }
@@ -155,5 +155,6 @@ const styles = StyleSheet.create({
   },
 });
 
-export const userName = "Matar";
+// Export the current user's ID for use in other components
+export const userName = auth.currentUser?.uid || "Matar";
 export const userAvatar = "M";

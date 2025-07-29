@@ -1,7 +1,7 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { doc, onSnapshot } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -12,8 +12,9 @@ import {
   View,
 } from "react-native";
 import { db } from '../../firebaseConfig';
+import { useAuth } from '../../hooks/useAuth';
 import colors from '../colors';
-import ProfileHeader, { userName } from '../components/ProfileHeader';
+import ProfileHeader from '../components/ProfileHeader';
 
 const courses = [
   {
@@ -44,20 +45,23 @@ const courses = [
 
 export default function CoursesScreen() {
   const router = useRouter();
-  const [financeProgress, setFinanceProgress] = useState(0);
+  const { userId } = useAuth();
+  const [financeProgress, setFinanceProgress] = useState([]);
 
   useEffect(() => {
-    const progressRef = doc(db, "users", userName);
+    if (!userId) return;
+    
+    const progressRef = doc(db, "users", userId);
     const unsubscribe = onSnapshot(progressRef, (docSnap) => {
       if (docSnap.exists()) {
         const completed = docSnap.data().financeProgress || [];
-        setFinanceProgress(completed.length);
+        setFinanceProgress(completed);
       } else {
-        setFinanceProgress(0);
+        setFinanceProgress([]);
       }
     });
     return unsubscribe;
-  }, []);
+  }, [userId]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -76,34 +80,50 @@ export default function CoursesScreen() {
           
           {courses.map((course) => {
             let progress = 0;
+            let locked = false;
             if (course.id === 'finance') {
-              progress = Math.round((financeProgress / course.levels) * 100);
+              progress = Math.round((financeProgress.length / course.levels) * 100);
             } else {
-              progress = 0;
+              // Lock other courses until finance is complete
+              locked = financeProgress.length < courses[0].levels;
             }
             return (
               <TouchableOpacity
                 key={course.id}
-                style={styles.courseCard}
-                onPress={() => router.push(`/courses/${course.id}`)}
+                style={[
+                  styles.courseCard,
+                  locked && { opacity: 0.5 }
+                ]}
+                onPress={() => !locked && router.push(`/courses/${course.id}`)}
+                disabled={locked}
               >
                 <View style={[styles.courseIconContainer, { backgroundColor: course.color }]}>
                   <MaterialIcons name={course.icon} size={32} color="white" />
+                  {locked && (
+                    <MaterialIcons
+                      name="lock"
+                      size={28}
+                      color="#fff"
+                      style={{ position: 'absolute', bottom: 8, right: 8 }}
+                    />
+                  )}
                 </View>
                 <View style={styles.courseContent}>
                   <Text style={styles.courseTitle}>{course.title}</Text>
                   <Text style={styles.courseDescription}>{course.description}</Text>
-                  <View style={styles.progressContainer}>
-                    <View style={styles.progressBar}>
-                      <View 
-                        style={[
-                          styles.progressFill,
-                          { width: `${progress}%`, backgroundColor: course.color }
-                        ]} 
-                      />
+                  {course.id === 'finance' && (
+                    <View style={styles.progressContainer}>
+                      <View style={styles.progressBar}>
+                        <View
+                          style={[
+                            styles.progressFill,
+                            { width: `${progress}%`, backgroundColor: course.color }
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.progressText}>{progress}%</Text>
                     </View>
-                    <Text style={styles.progressText}>{progress}%</Text>
-                  </View>
+                  )}
                 </View>
               </TouchableOpacity>
             );
@@ -192,4 +212,4 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     width: 38,
   },
-}); 
+});

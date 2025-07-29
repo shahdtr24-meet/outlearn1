@@ -1,132 +1,192 @@
 import { router } from 'expo-router';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { auth, db } from '../../firebaseConfig';
-
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View, SafeAreaView } from 'react-native';
+import colors from '../colors';
 
 const LoginScreen = () => {
-  const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleAuth = async () => {
-    setLoading(true);
-    try {
-      if (isSignup) {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        // Add user to Firestore with comprehensive profile
-        await setDoc(doc(db, 'users', userCredential.user.uid), {
-          email: userCredential.user.email,
-          displayName: 'New User',
-          points: 0,
-          level: 1,
-          financeProgress: [],
-          completedCourses: [],
-          achievements: [],
-          createdAt: new Date().toISOString(),
-          lastActive: new Date().toISOString(),
-        });
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
-      }
-
-      // ✅ Go to the tabbed app screen after login/signup
-      router.replace('/(tabs)');
-    } catch (error) {
-      Alert.alert('Authentication Error', error.message);
-    } finally {
-      setLoading(false);
+  const handleLogin = () => {
+    if (!email.trim()) {
+      Alert.alert('Error', 'Please enter your email');
+      return;
     }
+    if (!password.trim()) {
+      Alert.alert('Error', 'Please enter your password');
+      return;
+    }
+    
+    // Navigate to the main app
+    router.replace('/(tabs)');
+  };
+
+  const handleSignup = () => {
+    router.push('/signup');
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{isSignup ? 'SIGN UP' : 'LOGIN'}</Text>
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#00ffcc"
-        autoCapitalize="none"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#00ffcc"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      
-      <TouchableOpacity style={styles.button} onPress={handleAuth} disabled={loading}>
-        <Text style={styles.buttonText}>
-          {isSignup ? 'Create Account' : 'Escape The Matrix'}
+    <SafeAreaView style={styles.container}>
+      {/* Header Logo */}
+      <View style={styles.header}>
+        <Text style={styles.logo}>
+          <Text style={styles.logoBlue}>Out</Text>
+          <Text style={styles.logoOrange}>Learn</Text>
         </Text>
-      </TouchableOpacity>
+      </View>
       
-      <TouchableOpacity onPress={() => setIsSignup(!isSignup)}>
-        <Text style={styles.toggleText}>
-          {isSignup ? 'Already have an account? Login' : "Don't have an account? Sign up"}
+      {/* Main Content */}
+      <View style={styles.mainContent}>
+        <Text style={styles.title}>
+          <Text style={styles.titleBrown}>SIGN </Text>
+          <Text style={styles.titleOrange}>IN</Text>
         </Text>
-      </TouchableOpacity>
-    </View>
+        <Text style={styles.subtitle}>Welcome back! Enter your credentials to continue</Text>
+        
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Email:"
+            placeholderTextColor="#F3F0EC"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            value={email}
+            onChangeText={setEmail}
+          />
+        </View>
+        
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Password:"
+            placeholderTextColor="#F3F0EC"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+          />
+        </View>
+        
+        <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+          <Text style={styles.buttonText}>Sign In</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity onPress={handleSignup}>
+          <Text style={styles.toggleText}>DON'T HAVE AN ACCOUNT? SIGN UP</Text>
+        </TouchableOpacity>
+      </View>
+      
+      {/* Footer */}
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>
+          all rights are reserved to outlearn Ⓒ
+        </Text>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f0f0f',
+    backgroundColor: colors.welcomeBackground,
+    padding: 0,
+  },
+  header: {
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  logo: {
+    fontSize: 17,
+    fontWeight: 'normal',
+  },
+  logoBlue: {
+    color: colors.outBlue,
+  },
+  logoOrange: {
+    color: colors.outOrange,
+  },
+  mainContent: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   title: {
-    fontSize: 28,
-    marginBottom: 40,
-    color: '#00ffff',
-    textShadowColor: '#00ffff',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
-    fontWeight: 'bold',
+    fontSize: 55,
+    marginBottom: 10,
+    fontWeight: 'normal',
+    textAlign: 'center',
+  },
+  titleBrown: {
+    color: '#7C4D33', // Brown color
+  },
+  titleOrange: {
+    color: colors.outOrange,
+  },
+  subtitle: {
+    fontSize: 10,
+    marginBottom: 30,
+    color: colors.outBlue,
+    textAlign: 'center',
+    maxWidth: 300,
+  },
+  inputContainer: {
+    width: '100%',
+    maxWidth: 300,
+    marginBottom: 16,
+    position: 'relative',
   },
   input: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderBottomWidth: 2,
-    borderBottomColor: '#00ffff',
-    color: '#00ffcc',
-    fontSize: 16,
-    padding: 12,
-    marginBottom: 20,
-    borderRadius: 10,
+    height: 54,
+    backgroundColor: colors.outOrange,
+    borderRadius: 27,
+    paddingHorizontal: 24,
+    color: '#F3F0EC', // Light color for text
+    fontSize: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   button: {
-    backgroundColor: '#00ffff',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: 12,
-    shadowColor: '#00ffff',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 10,
-    elevation: 10,
+    width: 146,
+    height: 35,
+    backgroundColor: '#7C4D33', // Brown color
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   buttonText: {
-    color: '#000',
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
+    color: '#F3F0EC', // Light color
+    fontSize: 19,
+    fontWeight: '400',
   },
   toggleText: {
-    color: '#00ffff',
+    color: '#F5B125', // Yellow color
+    fontSize: 12,
+    fontWeight: '400',
+    textDecorationLine: 'underline',
     marginTop: 20,
+  },
+  footer: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  footerText: {
+    color: colors.outBlue,
+    fontSize: 9,
+    fontWeight: '400',
   },
 });
 

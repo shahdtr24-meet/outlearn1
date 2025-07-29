@@ -1,4 +1,4 @@
-import { addDoc, arrayUnion, collection, doc, getDoc, increment, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { addDoc, arrayUnion, collection, doc, getDoc, increment, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
 export class UserService {
@@ -179,4 +179,38 @@ export class UserService {
       console.error('Error updating last active:', error);
     }
   }
+
+  /**
+   * Set completed levels for a user
+   */
+  static async setCompletedLevels(userId, levels) {
+    if (!userId) throw new Error('User ID is required');
+    
+    const userRef = doc(db, 'users', userId);
+    
+    try {
+      await updateDoc(userRef, {
+        financeProgress: levels.map(Number),
+        lastActive: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('Error setting completed levels:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate progress percentage for completed levels
+   */
+  static calculateProgressPercent(completedLevels, totalLevels) {
+    if (!Array.isArray(completedLevels) || !Array.isArray(totalLevels)) {
+      throw new Error('Invalid arguments: Arrays expected');
+    }
+    
+    const completedCount = completedLevels.filter(level => totalLevels.includes(level)).length;
+    return Math.round((completedCount / totalLevels.length) * 100);
+  }
 }
+
+// Usage example
+await UserService.updateCourseProgress(userId, 'finance', selectedLevel);

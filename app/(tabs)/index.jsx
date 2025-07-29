@@ -1,5 +1,4 @@
 import { MaterialIcons } from "@expo/vector-icons";
-import React from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -11,7 +10,7 @@ import {
 import colors from '../colors';
 import ProfileHeader from '../components/ProfileHeader';
 
-export default function DashboardScreen() {
+export default function Index() {
   const goals = [
     { id: "1", title: "Master Breathing Techniques", progress: 70, icon: "self-improvement" },
     { id: "2", title: "Read 3 Technical Books", progress: 30, icon: "menu-book" },
@@ -195,4 +194,4 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     textAlign: "center",
   },
-}); 
+});
