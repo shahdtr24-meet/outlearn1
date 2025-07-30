@@ -1,13 +1,16 @@
 const colors = {
-  primary: "#3498db",
-  secondary: "#2980b9",
-  accent: "#f39c12",
-  background: "#f5f8fa",
-  card: "#ffffff",
-  text: "#2c3e50",
-  textLight: "#7f8c8d",
+  primary: "#FDBD10", // Golden Yellow (LEARN color) - Changed from Sky Blue to match rate page
+  secondary: "#FDBD10", // Golden Yellow (LEARN color)
+  accent: "#FDBD10", // Golden Yellow for buttons
+  background: "#ffffff", // White background
+  card: "#fef6ed", // Light cream background for cards - Updated to match rate page
+  text: "#6B3F27", // Dark Brown for text
+  textLight: "#999999",
   success: "#2ecc71",
-  border: "#e0e6ed",
+  border: "#6B3F27", // Dark Brown for borders - Updated to match rate page
+  blue: "#72AEE6", // Sky Blue for highlights
+  orange: "#FDBD10", // Golden Yellow for highlights
+  brown: "#6B3F27", // Brown for some elements - Updated to match rate page
 };
 
-export default colors; 
+export default colors;

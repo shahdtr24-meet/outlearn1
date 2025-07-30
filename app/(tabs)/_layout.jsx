@@ -21,18 +21,27 @@ export default function TabLayout() {
             case 'community':
               iconName = 'groups';
               break;
+            case 'course':
+              iconName = 'school';
+              break;
+            case 'games':
+              iconName = 'sports-esports';
+              break;
             default:
               iconName = 'dashboard';
           }
 
           return <MaterialIcons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textLight,
+        tabBarActiveTintColor: '#fff',
+        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.7)',
         tabBarStyle: {
           height: 60,
           paddingBottom: 10,
           paddingTop: 6,
+          backgroundColor: colors.primary,
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
         },
         headerShown: false,
       })}
@@ -55,7 +64,19 @@ export default function TabLayout() {
           title: 'Community',
         }}
       />
+      <Tabs.Screen
+        name="course"
+        options={{
+          title: 'Courses',
+        }}
+      />
+      <Tabs.Screen
+        name="games"
+        options={{
+          title: 'Games',
+        }}
+      />
       </Tabs>
     </AuthProvider>
   );
-} 
+}

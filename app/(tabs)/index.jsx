@@ -92,7 +92,8 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#fff",
+    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
   },
   contentContainer: {
     padding: 16,
@@ -114,7 +115,7 @@ const styles = StyleSheet.create({
   goalCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.card,
+    backgroundColor: "#fef6ed",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -123,6 +124,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    borderWidth: 2,
+    borderColor: "#6B3F27",
   },
   goalContent: {
     flex: 1,
@@ -163,7 +166,7 @@ const styles = StyleSheet.create({
   },
   achievementCard: {
     width: 140,
-    backgroundColor: colors.card,
+    backgroundColor: "#fef6ed",
     borderRadius: 12,
     padding: 16,
     marginRight: 12,
@@ -173,6 +176,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#6B3F27",
   },
   achievementIconContainer: {
     width: 48,
@@ -195,4 +200,4 @@ const styles = StyleSheet.create({
     color: colors.textLight,
     textAlign: "center",
   },
-}); 
+});

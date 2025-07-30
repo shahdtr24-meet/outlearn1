@@ -1,7 +1,7 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { doc, onSnapshot } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -14,23 +14,22 @@ import {
 import { db } from "../../firebaseConfig";
 import { useAuth } from "../../hooks/useAuth";
 import { UserService } from "../../services/userService";
-import colors from '../colors';
 import ProfileHeader from '../components/ProfileHeader';
 import Quiz from '../components/Quiz';
 
 // --- LEVELS WITH 5 QUESTIONS EACH (for demo, questions are repeated/varied) ---
 const baseQuestions = [
   {
-    question: "Which investment option would you choose?",
-    answers: ["$15,000 with 10% interest rate", "$10,000 with 15% interest rate"],
-    correctAnswer: "$10,000 with 15% interest rate",
-    explanation: "The second option yields $1,500 vs $1,500 from the first option, but requires less capital."
+    question: " Opportunity cost always 	involves spending money.",
+    answers: ["true", "false"],
+    correctAnswer: "false",
+    explanation: "Opportunity cost is about what you give up, not just money. It could be time, experiences, or other benefits"
   },
   {
-    question: "If you have $5,000 to invest, which option is better?",
-    answers: ["5% guaranteed annual return", "50% chance of 12% return, 50% chance of 0%"],
-    correctAnswer: "5% guaranteed annual return",
-    explanation: "The expected value is the same (5%), but the guaranteed return has no risk."
+    question: "Opportunity cost doesn’t 	affect personal finance decisions.",
+    answers: ["true", "false"],
+    correctAnswer: "false",
+    explanation: "Every personal finance choice involves giving up other options, which is exactly what opportunity cost is."
   },
   {
     question: "You're offered two payment options for a $1,000 loan. Which is better?",
@@ -195,57 +194,68 @@ export default function FinanceCourse() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.section}>
+          {/* Course Header */}
           <View style={styles.courseHeader}>
-            <MaterialIcons name="attach-money" size={48} color={colors.primary} />
-            <Text style={styles.courseTitle}>Financial Management</Text>
-            <Text style={styles.courseDescription}>
-              Complete all 10 levels to master financial management!
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.button, styles.secondaryButton, { alignSelf: 'center', marginBottom: 16 }]}
-            onPress={handleBackToCourses}
-          >
-            <Text style={[styles.buttonText, styles.secondaryButtonText]}>Back to Courses</Text>
-          </TouchableOpacity>
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
-              <View 
-                style={[
-                  styles.progressFill,
-                  { width: `${progressPercent}%` }
-                ]} 
-              />
-              {/* Add a gray background for the rest of the bar */}
-              <View
-                style={[
-                  StyleSheet.absoluteFill,
-                  { backgroundColor: colors.border, width: '100%', zIndex: -1 }
-                ]}
-              />
-            </View>
+            <Text style={styles.courseTitle}>FINANCIAL LITERACY</Text>
             <Text style={styles.progressText}>{progressPercent}% completed</Text>
+            
+            <TouchableOpacity
+              style={[styles.button, styles.secondaryButton, { marginTop: 16 }]}
+              onPress={handleBackToCourses}
+            >
+              <Text style={[styles.buttonText, styles.secondaryButtonText]}>Back to Courses</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={styles.levelsTitle}>Levels</Text>
-          {levels.map((level) => {
-            const isCompleted = completedLevels.includes(level.id);
-            return (
-              <TouchableOpacity
-                key={level.id}
-                style={[
-                  styles.levelCard,
-                  isCompleted && styles.levelCardCompleted
-                ]}
-                onPress={() => setSelectedLevel(level.id)}
-                disabled={isCompleted && false /* allow redo if failed */}
-              >
-                <Text style={styles.levelText}>Level {level.id}</Text>
-                {isCompleted && (
-                  <MaterialIcons name="check" size={20} color={colors.success} />
-                )}
-              </TouchableOpacity>
-            );
-          })}
+
+          {/* Vertical Path with Levels */}
+          <View style={styles.pathContainer}>
+            {levels.map((level, index) => {
+              const isCompleted = completedLevels.includes(level.id);
+              const isUnlocked = index === 0 || completedLevels.includes(level.id - 1);
+              const isLast = index === levels.length - 1;
+              
+              return (
+                <View key={level.id} style={styles.levelContainer}>
+                  {/* Connecting Line Above (except for first level) */}
+                  {index > 0 && (
+                    <View style={styles.connectingLine} />
+                  )}
+                  
+                  {/* Level Node */}
+                  <TouchableOpacity
+                    style={[
+                      styles.levelNode,
+                      isCompleted && styles.levelNodeCompleted,
+                      !isUnlocked && styles.levelNodeLocked
+                    ]}
+                    onPress={() => isUnlocked && setSelectedLevel(level.id)}
+                    disabled={!isUnlocked}
+                  >
+                    {isCompleted ? (
+                      <MaterialIcons name="check" size={24} color="#fff" />
+                    ) : !isUnlocked ? (
+                      <MaterialIcons name="lock" size={24} color="#8B4513" />
+                    ) : (
+                      <MaterialIcons name="attach-money" size={24} color="#fff" />
+                    )}
+                  </TouchableOpacity>
+                  
+                  {/* Level Label */}
+                  <Text style={[
+                    styles.levelLabel,
+                    !isUnlocked && styles.levelLabelLocked
+                  ]}>
+                    Level {level.id}
+                  </Text>
+                  
+                  {/* Connecting Line Below (except for last level) */}
+                  {!isLast && (
+                    <View style={styles.connectingLine} />
+                  )}
+                </View>
+              );
+            })}
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -255,84 +265,80 @@ export default function FinanceCourse() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#f5f5f5',
   },
   contentContainer: {
-    padding: 16,
+    padding: 20,
   },
   section: {
     marginBottom: 24,
   },
   courseHeader: {
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 40,
   },
   courseTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "bold",
-    color: colors.text,
-    marginTop: 8,
-  },
-  courseDescription: {
-    fontSize: 15,
-    color: colors.textLight,
-    marginTop: 4,
-    textAlign: "center",
-  },
-  progressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  progressBar: {
-    flex: 1,
-    height: 10,
-    backgroundColor: colors.border,
-    borderRadius: 5,
-    overflow: "hidden",
-    marginRight: 12,
-  },
-  progressFill: {
-    height: "100%",
-    backgroundColor: colors.primary,
-    borderRadius: 5,
+    color: '#4A90E2',
+    marginBottom: 8,
+    letterSpacing: 1,
   },
   progressText: {
     fontSize: 14,
-    fontWeight: "500",
-    color: colors.textLight,
-    width: 80,
+    color: '#666',
+    letterSpacing: 0.5,
   },
-  levelsTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: colors.text,
-    marginBottom: 8,
+  pathContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
   },
-  levelCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.card,
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 10,
-    elevation: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
+  levelContainer: {
+    alignItems: 'center',
+    position: 'relative',
   },
-  levelCardCompleted: {
-    backgroundColor: colors.success,
-    opacity: 0.6,
+  connectingLine: {
+    width: 3,
+    height: 40,
+    backgroundColor: '#ddd',
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: '#bbb',
   },
-  levelText: {
-    fontSize: 15,
-    color: colors.text,
-    flex: 1,
+  levelNode: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFB347',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+    marginVertical: 10,
+  },
+  levelNodeCompleted: {
+    backgroundColor: '#2ecc71',
+  },
+  levelNodeLocked: {
+    backgroundColor: '#f0f0f0',
+    borderWidth: 2,
+    borderColor: '#ddd',
+  },
+  levelLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+    marginTop: 5,
+    letterSpacing: 0.5,
+  },
+  levelLabelLocked: {
+    color: '#999',
   },
   resultCard: {
-    backgroundColor: colors.card,
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 24,
     alignItems: "center",
@@ -347,17 +353,17 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 12,
     marginBottom: 8,
-    color: colors.text,
+    color: '#333',
   },
   resultScore: {
     fontSize: 16,
-    color: colors.textLight,
+    color: '#666',
     marginBottom: 16,
   },
   button: {
-    backgroundColor: colors.primary,
-    borderRadius: 20,
-    paddingVertical: 10,
+    backgroundColor: '#FFB347',
+    borderRadius: 25,
+    paddingVertical: 12,
     paddingHorizontal: 24,
     marginTop: 10,
     marginBottom: 6,
@@ -365,23 +371,25 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 14,
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
   secondaryButton: {
-    backgroundColor: colors.card,
+    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: colors.primary,
+    borderColor: '#FFB347',
   },
   secondaryButtonText: {
-    color: colors.primary,
+    color: '#FFB347',
   },
   leaveButton: {
-    backgroundColor: colors.card,
+    backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: colors.error || '#e74c3c',
+    borderColor: '#e74c3c',
     marginTop: 10,
   },
   leaveButtonText: {
-    color: colors.error || '#e74c3c',
+    color: '#e74c3c',
   },
-}); 
+});

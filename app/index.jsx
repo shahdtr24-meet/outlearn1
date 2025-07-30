@@ -13,7 +13,7 @@ export default function Index() {
       if (user) {
         router.replace('/(tabs)');
       } else {
-        router.replace('/login');
+        router.replace('/(auth)/landingpage');
       }
       setCheckingAuth(false);
     });
@@ -24,7 +24,7 @@ export default function Index() {
   if (checkingAuth) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#00ffff" />
+        <ActivityIndicator size="large" color="#FDBD10" />
       </View>
     );
   }
