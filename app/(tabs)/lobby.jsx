@@ -34,10 +34,7 @@ export default function GamesScreen() {
       <StatusBar barStyle="light-content" />
       <ProfileHeader />
       
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Financial Mini-Games</Text>
-        <Text style={styles.headerSubtitle}>Learn finance concepts through fun interactive games</Text>
-      </View>
+     
       
       <ScrollView 
         style={styles.contentContainer}

@@ -1,203 +1,197 @@
-import { MaterialIcons } from "@expo/vector-icons";
-import React from "react";
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import {
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
-} from "react-native";
-import colors from '../colors';
-import ProfileHeader from '../components/ProfileHeader';
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Feather'; // ✅ Replaces lucide-react-native
+import ProfileHeader from '../components/ProfileHeader'; // ✅ Adjust path as needed
 
-export default function DashboardScreen() {
-  const goals = [
-    { id: "1", title: "Master Breathing Techniques", progress: 70, icon: "self-improvement" },
-    { id: "2", title: "Read 3 Technical Books", progress: 30, icon: "menu-book" },
-    { id: "3", title: "Improve UI Design Skills", progress: 50, icon: "design-services" },
+const HomePage = () => {
+  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const [animatedCounts, setAnimatedCounts] = useState({
+    users: 0,
+    courses: 0,
+    achievements: 0,
+  });
+
+  const testimonials = [
+    {
+      name: 'Sarah Johnson',
+      role: 'Software Developer',
+      content:
+        'This app transformed my learning journey. The gamified approach kept me motivated!',
+    },
+    {
+      name: 'Mike Chen',
+      role: 'Product Manager',
+      content:
+        "Amazing community and top-notch content. I've completed 5 courses already!",
+    },
+    {
+      name: 'Emma Davis',
+      role: 'Designer',
+      content:
+        'The achievement system is brilliant. It makes learning addictive in the best way!',
+    },
   ];
 
-  const achievements = [
-    { id: "1", title: "Excellence Award", icon: "star", date: "Mar 10, 2025" },
-    { id: "2", title: "Fast Learner", icon: "speed", date: "Feb 22, 2025" },
-    { id: "3", title: "Top Innovator", icon: "lightbulb", date: "Jan 15, 2025" },
-  ];
+  useEffect(() => {
+    const targets = { users: 10000, courses: 150, achievements: 500 };
+    const steps = 60;
+    const duration = 2000;
+    const increment = duration / steps;
+
+    const interval = setInterval(() => {
+      setAnimatedCounts((prev) => ({
+        users: Math.min(prev.users + targets.users / steps, targets.users),
+        courses: Math.min(prev.courses + targets.courses / steps, targets.courses),
+        achievements: Math.min(
+          prev.achievements + targets.achievements / steps,
+          targets.achievements
+        ),
+      }));
+    }, increment);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       <ProfileHeader />
-      
-      <ScrollView 
-        style={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Goals Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <MaterialIcons name="flag" size={24} color={colors.primary} />
-            <Text style={styles.sectionTitle}>Current Goals</Text>
-          </View>
-          
-          {goals.map((goal) => (
-            <View key={goal.id} style={styles.goalCard}>
-              <MaterialIcons name={goal.icon} size={24} color={colors.primary} />
-              <View style={styles.goalContent}>
-                <Text style={styles.goalTitle}>{goal.title}</Text>
-                <View style={styles.progressContainer}>
-                  <View style={styles.progressBar}>
-                    <View 
-                      style={[
-                        styles.progressFill, 
-                        { width: `${goal.progress}%` }
-                      ]} 
-                    />
-                  </View>
-                  <Text style={styles.progressText}>{goal.progress}%</Text>
-                </View>
-              </View>
+
+      {/* Hero Section */}
+      <View style={styles.hero}>
+        <Text style={styles.heroTitle}>
+          Transform Your Learning
+          <Text style={styles.heroHighlight}>{'\n'}Journey Today</Text>
+        </Text>
+        <Text style={styles.heroSubtitle}>
+          Join the OutLearn comunity, mastering new skills with our
+          gamified, interactive learning platform.
+        </Text>
+
+        {/* CTA Buttons */}
+        <View style={styles.buttonRow}>
+          <TouchableOpacity onPress={() => router.push('/course')} style={styles.primaryButton}>
+            <Icon name="play" size={18} color="#fff" />
+            <Text style={styles.primaryButtonText}>Start Learning Now</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Stats */}
+        <View style={styles.statsRow}>
+          {[ 
+            { label: 'Active Learners', value: animatedCounts.users },
+            { label: 'Expert Courses', value: animatedCounts.courses },
+            { label: 'Achievements', value: animatedCounts.achievements },
+          ].map((stat, index) => (
+            <View key={index} style={styles.statCard}>
+              <Text style={styles.statValue}>
+                {Math.floor(stat.value).toLocaleString()}+
+              </Text>
+              <Text style={styles.statLabel}>{stat.label}</Text>
             </View>
           ))}
         </View>
-
-        {/* Achievements Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <MaterialIcons name="emoji-events" size={24} color={colors.primary} />
-            <Text style={styles.sectionTitle}>Achievements</Text>
-          </View>
-          
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.achievementsContainer}
-          >
-            {achievements.map((achievement) => (
-              <View key={achievement.id} style={styles.achievementCard}>
-                <View style={styles.achievementIconContainer}>
-                  <MaterialIcons name={achievement.icon} size={24} color="white" />
-                </View>
-                <Text style={styles.achievementTitle}>{achievement.title}</Text>
-                <Text style={styles.achievementDate}>{achievement.date}</Text>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
+    backgroundColor: '#fff',
   },
-  contentContainer: {
-    padding: 16,
+  hero: {
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+    backgroundColor: '#FFF5DB',
+    alignItems: 'center',
   },
-  section: {
-    marginBottom: 24,
+  heroTitle: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#2C1810',
+    textAlign: 'center',
   },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
+  heroHighlight: {
+    color: '#FDBD10',
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: colors.text,
-    marginLeft: 8,
-  },
-  goalCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fef6ed",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    borderWidth: 2,
-    borderColor: "#6B3F27",
-  },
-  goalContent: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  goalTitle: {
+  heroSubtitle: {
     fontSize: 16,
-    fontWeight: "600",
-    color: colors.text,
-    marginBottom: 8,
+    color: '#8B7355',
+    textAlign: 'center',
+    marginTop: 16,
+    maxWidth: 400,
   },
-  progressContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+  buttonRow: {
+    flexDirection: 'row',
+    marginTop: 24,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
   },
-  progressBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: colors.border,
-    borderRadius: 4,
-    overflow: "hidden",
+  primaryButton: {
+    flexDirection: 'row',
+    backgroundColor: '#FDBD10',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 999,
+    alignItems: 'center',
+    margin: 6,
   },
-  progressFill: {
-    height: "100%",
-    backgroundColor: colors.primary,
-    borderRadius: 4,
-  },
-  progressText: {
+  primaryButtonText: {
+    fontWeight: 'bold',
+    color: '#fff',
+    fontSize: 14,
     marginLeft: 8,
-    fontSize: 14,
-    fontWeight: "500",
-    color: colors.textLight,
-    width: 38,
   },
-  achievementsContainer: {
-    paddingVertical: 8,
-    paddingRight: 8,
-  },
-  achievementCard: {
-    width: 140,
-    backgroundColor: "#fef6ed",
-    borderRadius: 12,
-    padding: 16,
-    marginRight: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    alignItems: "center",
+  secondaryButton: {
+    borderColor: '#6B3F27',
     borderWidth: 2,
-    borderColor: "#6B3F27",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 999,
+    margin: 6,
   },
-  achievementIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  achievementTitle: {
+  secondaryButtonText: {
+    fontWeight: 'bold',
+    color: '#2C1810',
     fontSize: 14,
-    fontWeight: "600",
-    color: colors.text,
-    textAlign: "center",
-    marginBottom: 6,
   },
-  achievementDate: {
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 40,
+    width: '100%',
+  },
+  statCard: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#FDBD10',
+  },
+  statLabel: {
     fontSize: 12,
-    color: colors.textLight,
-    textAlign: "center",
+    color: '#8B7355',
+    marginTop: 4,
   },
 });
+
+export default HomePage;

@@ -2,8 +2,15 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { router } from 'expo-router';
 import { signOut, updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+  withRepeat,
+} from 'react-native-reanimated';
 import { auth, db } from '../../firebaseConfig';
 import { useAuth } from '../../hooks/useAuth';
 import { UserService } from '../../services/userService';
@@ -13,10 +20,66 @@ export default function ProfileHeader() {
   const { user, userProfile, loading } = useAuth();
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState('');
+  const [streak, setStreak] = useState(0);
 
   const displayName = userProfile?.displayName || user?.email || 'User';
   const points = userProfile?.points || 0;
   const level = UserService.calculateLevel(points);
+  
+  // Update last active timestamp when component mounts
+  useEffect(() => {
+    const updateActivity = async () => {
+      if (user?.uid) {
+        try {
+          // Update last active and get current streak
+          await UserService.updateLastActive(user.uid);
+          const currentStreak = await UserService.getUserStreak(user.uid);
+          setStreak(currentStreak || 0);
+        } catch (error) {
+          console.error('Error updating activity:', error);
+        }
+      }
+    };
+    
+    updateActivity();
+  }, [user?.uid]);
+  
+  // Animation values
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
+  const streakRotate = useSharedValue(0);
+  const badgeOpacity = useSharedValue(0);
+  
+  // Initialize animations
+  useEffect(() => {
+    // Streak flame animation - match the profile page animation
+    streakRotate.value = withRepeat(
+      withSequence(
+        withTiming(-5, { duration: 300 }),
+        withTiming(5, { duration: 300 })
+      ),
+      -1, // Infinite repeat
+      true // Reverse
+    );
+    
+    // Badge animation
+    badgeOpacity.value = withTiming(1, { duration: 800 });
+  }, []);
+  
+  // Animated styles
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+  
+  const streakAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${streakRotate.value}deg` }]
+  }));
+  
+  const badgeAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: badgeOpacity.value,
+    transform: [{ scale: badgeOpacity.value }]
+  }));
 
   const handleSave = async () => {
     if (user && inputValue.trim()) {
@@ -39,9 +102,27 @@ export default function ProfileHeader() {
     return <ActivityIndicator color="#fff" style={{ margin: 20 }} />;
   }
 
+  // Handle profile navigation with animation
+  const navigateToProfile = () => {
+    // Animate the header when clicked
+    scale.value = withSequence(
+      withTiming(0.95, { duration: 100 }),
+      withTiming(1, { duration: 100 })
+    );
+    
+    // Navigate to profile page
+    setTimeout(() => {
+      router.push('/profile');
+    }, 200);
+  };
+  
   return (
-    <View style={styles.header}>
-      <View style={styles.headerContent}>
+    <TouchableOpacity 
+      style={styles.header}
+      activeOpacity={0.9}
+      onPress={navigateToProfile}
+    >
+      <Animated.View style={[styles.headerContent, animatedStyle]}>
         <View style={styles.headerLeft}>
           <View style={styles.profilePhoto}>
             <Text style={styles.profilePhotoText}>{displayName ? displayName[0].toUpperCase() : 'U'}</Text>
@@ -64,22 +145,36 @@ export default function ProfileHeader() {
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity onPress={() => { setInputValue(displayName); setEditing(true); }}>
+              <View>
                 <Text style={styles.headerName}>{displayName}</Text>
-              </TouchableOpacity>
+                <Text style={[styles.headerSubtitle, {marginTop: 2}]}>Tap to view profile</Text>
+              </View>
             )}
             <Text style={styles.headerSubtitle}>Level {level}</Text>
           </View>
         </View>
-        <View style={styles.pointsBadge}>
-          <MaterialIcons name="local-fire-department" size={20} color="white" />
-          <Text style={styles.pointsText}>{points}</Text>
+        
+        <View style={styles.badgesContainer}>
+          {/* Streak Badge */}
+          <Animated.View style={[styles.pointsBadge, badgeAnimatedStyle, { marginLeft: 8, backgroundColor: colors.brown }]}>
+            <Animated.View style={streakAnimatedStyle}>
+              <MaterialIcons name="local-fire-department" size={20} color="white" />
+            </Animated.View>
+            <Text style={styles.pointsText}>{streak}</Text>
+          </Animated.View>
         </View>
-        <TouchableOpacity onPress={handleSignOut} style={styles.signOutBtn}>
+        
+        <TouchableOpacity 
+          onPress={(e) => {
+            e.stopPropagation(); // Prevent triggering the parent TouchableOpacity
+            handleSignOut();
+          }} 
+          style={styles.signOutBtn}
+        >
           <MaterialIcons name="logout" size={22} color="#fff" />
         </TouchableOpacity>
-      </View>
-    </View>
+      </Animated.View>
+    </TouchableOpacity>
   );
 }
 
@@ -131,6 +226,12 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     color: "rgba(255, 255, 255, 0.8)",
+  },
+  badgesContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    alignItems: "center",
   },
   pointsBadge: {
     flexDirection: "row",

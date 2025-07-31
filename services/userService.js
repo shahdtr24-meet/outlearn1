@@ -166,17 +166,46 @@ export class UserService {
   }
 
   /**
-   * Update user's last active timestamp
+   * Update user's last active timestamp and always set streak to 1
    */
   static async updateLastActive(userId) {
     if (!userId) return;
     
     try {
-      await updateDoc(doc(db, 'users', userId), {
-        lastActive: serverTimestamp(),
-      });
+      const userRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        // Always set streak to 1
+        const updateData = {
+          lastActive: serverTimestamp(),
+          streak: 1,
+          lastStreakUpdate: serverTimestamp()
+        };
+        
+        await updateDoc(userRef, updateData);
+        return updateData.streak;
+      } else {
+        // If user document doesn't exist, create it with streak of 1
+        await setDoc(userRef, {
+          lastActive: serverTimestamp(),
+          streak: 1,
+          lastStreakUpdate: serverTimestamp(),
+          points: 0
+        });
+        return 1;
+      }
     } catch (error) {
-      console.error('Error updating last active:', error);
+      console.error('Error updating last active and streak:', error);
+      return null;
     }
+  }
+  
+  /**
+   * Get user's current streak - always returns 1
+   */
+  static async getUserStreak(userId) {
+    // Always return 1 regardless of database value
+    return 1;
   }
 }
