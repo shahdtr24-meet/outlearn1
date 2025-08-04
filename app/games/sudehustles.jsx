@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 // Business and Event Data
 const BUSINESSES = [
@@ -77,50 +78,25 @@ const EVENTS = [
 
 // UI Components
 const Card = ({ children }) => (
-  <div style={{
-    border: "2px solid #6B3F27",
-    padding: 20,
-    borderRadius: 10,
-    margin: 10,
-    background: "#fef6ed"
-  }}>{children}</div>
+  <View style={styles.card}>{children}</View>
 );
 
-const Button = ({ onClick, children, secondary }) => (
-  <button onClick={onClick} style={{
-    padding: "10px 20px",
-    margin: "10px 5px",
-    borderRadius: 25,
-    border: secondary ? "2px solid #6B3F27" : "none",
-    background: secondary ? "transparent" : "#FDBD10",
-    color: secondary ? "#6B3F27" : "white",
-    cursor: "pointer",
-    fontWeight: "bold"
-  }}>{children}</button>
+const Button = ({ onPress, children, secondary }) => (
+  <TouchableOpacity onPress={onPress} style={[styles.button, secondary && styles.buttonSecondary]}>
+    <Text style={[styles.buttonText, secondary && styles.buttonTextSecondary]}>{children}</Text>
+  </TouchableOpacity>
 );
 
 const Badge = ({ text }) => (
-  <span style={{
-    display: "inline-block",
-    padding: "5px 10px",
-    background: "#72AEE6",
-    color: "white",
-    borderRadius: "20px",
-    margin: "2px",
-    fontSize: "12px",
-    fontWeight: "bold"
-  }}>{text}</span>
+  <View style={styles.badge}>
+    <Text style={styles.badgeText}>{text}</Text>
+  </View>
 );
 
 const Progress = ({ value }) => (
-  <div style={{ height: 10, background: "#ddd", borderRadius: 5 }}>
-    <div style={{
-      width: `${value}%`,
-      background: "#FDBD10",
-      height: "100%",
-      borderRadius: 5
-    }} />
-  </div>
+  <View style={styles.progressContainer}>
+    <View style={[styles.progressBar, { width: `${value}%` }]} />
+  </View>
 );
 
 // Main Game Component
@@ -145,7 +121,7 @@ export default function SideHustleGame() {
       setMoney(money - biz.startupCost);
       setTime(time - biz.timePerWeek);
     } else {
-      alert("Not enough resources to start this business.");
+      Alert.alert("Not enough resources to start this business.");
     }
   };
 
@@ -166,127 +142,292 @@ export default function SideHustleGame() {
   };
 
   return (
-    <div style={{
-      height: "100vh",
-      overflowY: "auto",
-      padding: 30,
-      fontFamily: "sans-serif",
-      background: "#fff7ee"
-    }}>
-      <div style={{ maxWidth: 800, margin: "auto" }}>
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 20
-        }}>
-          <button
-            onClick={() => window.history.back()}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              fontSize: "16px",
-              color: "#6B3F27",
-              fontWeight: "bold"
-            }}
+    <ScrollView style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => window.history.back()}
+            style={styles.backButton}
           >
-            ← Back to Games
-          </button>
-          <h1 style={{ color: "#6B3F27", margin: 0 }}>Side Hustle Tycoon</h1>
-        </div>
+            <Text style={styles.backButtonText}>← Back to Games</Text>
+          </TouchableOpacity>
+          <Text style={styles.title}>Side Hustle Tycoon</Text>
+        </View>
 
-        <div style={{
-          display: "flex",
-          justifyContent: "space-between",
-          marginBottom: 20,
-          background: "#fef6ed",
-          padding: 15,
-          borderRadius: 10,
-          border: "2px solid #6B3F27"
-        }}>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#FDBD10" }}>${money}</div>
-            <div style={{ fontSize: 14, color: "#6B3F27" }}>Money</div>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#FDBD10" }}>{time}</div>
-            <div style={{ fontSize: 14, color: "#6B3F27" }}>Hours/Week</div>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 24, fontWeight: "bold", color: "#FDBD10" }}>Week {week}</div>
-            <div style={{ fontSize: 14, color: "#6B3F27" }}>Current Week</div>
-          </div>
-        </div>
+        <View style={styles.statsContainer}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>${money}</Text>
+            <Text style={styles.statLabel}>Money</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>{time}</Text>
+            <Text style={styles.statLabel}>Hours/Week</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>Week {week}</Text>
+            <Text style={styles.statLabel}>Current Week</Text>
+          </View>
+        </View>
 
         <Card>
-          <h3 style={{ color: "#6B3F27", marginTop: 0 }}>Reputation</h3>
+          <Text style={styles.sectionTitle}>Reputation</Text>
           <Progress value={reputation} />
-          <div style={{ textAlign: "right", fontSize: 14, color: "#999", marginTop: 5 }}>{reputation}%</div>
+          <Text style={styles.progressText}>{reputation}%</Text>
         </Card>
 
         {!selectedBusiness && (
-          <div>
-            <h2 style={{ color: "#6B3F27", borderBottom: "2px solid #FDBD10", paddingBottom: 10 }}>Choose a Side Hustle</h2>
+          <View>
+            <Text style={styles.mainTitle}>Choose a Side Hustle</Text>
             {BUSINESSES.map(biz => (
               <Card key={biz.id}>
-                <h3 style={{ color: "#6B3F27", display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 24 }}>{biz.icon}</span> {biz.name}
-                </h3>
-                <p style={{ color: "#666" }}>{biz.description}</p>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 15 }}>
-                  <div>
-                    <p style={{ margin: 5, color: "#6B3F27" }}><strong>Startup Cost:</strong> ${biz.startupCost}</p>
-                    <p style={{ margin: 5, color: "#6B3F27" }}><strong>Weekly Time:</strong> {biz.timePerWeek} hrs</p>
-                  </div>
-                  <div>
-                    <p style={{ margin: 5, color: "#6B3F27" }}><strong>Expected Income:</strong> ${biz.avgIncome}</p>
-                  </div>
-                </div>
-                <div style={{ marginBottom: 15 }}>{biz.skills.map(skill => <Badge key={skill} text={skill} />)}</div>
-                <div style={{ textAlign: "center" }}>
-                  <Button onClick={() => handleStartBusiness(biz)}>Start Business</Button>
-                </div>
+                <View style={styles.businessHeader}>
+                  <Text style={styles.businessIcon}>{biz.icon}</Text>
+                  <Text style={styles.businessName}>{biz.name}</Text>
+                </View>
+                <Text style={styles.businessDescription}>{biz.description}</Text>
+                <View style={styles.businessStats}>
+                  <View>
+                    <Text style={styles.businessStat}><Text style={styles.bold}>Startup Cost:</Text> ${biz.startupCost}</Text>
+                    <Text style={styles.businessStat}><Text style={styles.bold}>Weekly Time:</Text> {biz.timePerWeek} hrs</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.businessStat}><Text style={styles.bold}>Expected Income:</Text> ${biz.avgIncome}</Text>
+                  </View>
+                </View>
+                <View style={styles.skillsContainer}>
+                  {biz.skills.map(skill => <Badge key={skill} text={skill} />)}
+                </View>
+                <View style={styles.buttonContainer}>
+                  <Button onPress={() => handleStartBusiness(biz)}>Start Business</Button>
+                </View>
               </Card>
             ))}
-          </div>
+          </View>
         )}
 
         {selectedBusiness && (
           <Card>
-            <h2 style={{ color: "#6B3F27", borderBottom: "2px solid #FDBD10", paddingBottom: 10 }}>Current Business: {selectedBusiness.name}</h2>
-            <div style={{ display: "flex", alignItems: "center", gap: 15 }}>
-              <div style={{ fontSize: 40 }}>{selectedBusiness.icon}</div>
-              <div>
-                <p style={{ color: "#6B3F27", fontSize: 16 }}>
-                  You're earning <span style={{ color: "#FDBD10", fontWeight: "bold" }}>${selectedBusiness.avgIncome}</span> per week.
-                </p>
-                <div>{selectedBusiness.skills.map(skill => <Badge key={skill} text={skill} />)}</div>
-              </div>
-            </div>
+            <Text style={styles.mainTitle}>Current Business: {selectedBusiness.name}</Text>
+            <View style={styles.currentBusinessContainer}>
+              <Text style={styles.currentBusinessIcon}>{selectedBusiness.icon}</Text>
+              <View>
+                <Text style={styles.currentBusinessText}>
+                  You're earning <Text style={styles.highlight}>${selectedBusiness.avgIncome}</Text> per week.
+                </Text>
+                <View style={styles.skillsContainer}>
+                  {selectedBusiness.skills.map(skill => <Badge key={skill} text={skill} />)}
+                </View>
+              </View>
+            </View>
           </Card>
         )}
 
         {event && (
           <Card>
-            <h2 style={{ color: "#6B3F27", borderBottom: "2px solid #FDBD10", paddingBottom: 10 }}>{event.title}</h2>
-            <p style={{ color: "#666", fontSize: 16, marginBottom: 20 }}>{event.description}</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <Text style={styles.mainTitle}>{event.title}</Text>
+            <Text style={styles.eventDescription}>{event.description}</Text>
+            <View style={styles.eventOptions}>
               {event.options.map(opt => (
-                <Button key={opt.id} onClick={() => handleEventChoice(opt)}>{opt.action}</Button>
+                <Button key={opt.id} onPress={() => handleEventChoice(opt)}>{opt.action}</Button>
               ))}
-            </div>
+            </View>
           </Card>
         )}
 
         {selectedBusiness && (
-          <div style={{ textAlign: "center", marginTop: 20 }}>
-            <Button onClick={handleNextWeek}>Advance to Next Week</Button>
-          </div>
+          <View style={styles.nextWeekContainer}>
+            <Button onPress={handleNextWeek}>Advance to Next Week</Button>
+          </View>
         )}
-      </div>
-    </div>
+      </View>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#fff7ee",
+  },
+  content: {
+    padding: 30,
+    maxWidth: 800,
+    alignSelf: "center",
+    width: "100%",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  backButton: {
+    alignItems: "center",
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: "#6B3F27",
+    fontWeight: "bold",
+  },
+  title: {
+    color: "#6B3F27",
+    margin: 0,
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+    backgroundColor: "#fef6ed",
+    padding: 15,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#6B3F27",
+  },
+  statItem: {
+    alignItems: "center",
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FDBD10",
+  },
+  statLabel: {
+    fontSize: 14,
+    color: "#6B3F27",
+  },
+  card: {
+    borderWidth: 2,
+    borderColor: "#6B3F27",
+    padding: 20,
+    borderRadius: 10,
+    margin: 10,
+    backgroundColor: "#fef6ed",
+  },
+  button: {
+    padding: 10,
+    margin: 5,
+    borderRadius: 25,
+    backgroundColor: "#FDBD10",
+    alignItems: "center",
+  },
+  buttonSecondary: {
+    backgroundColor: "transparent",
+    borderWidth: 2,
+    borderColor: "#6B3F27",
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  buttonTextSecondary: {
+    color: "#6B3F27",
+  },
+  badge: {
+    padding: 5,
+    paddingHorizontal: 10,
+    backgroundColor: "#72AEE6",
+    borderRadius: 20,
+    margin: 2,
+  },
+  badgeText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  progressContainer: {
+    height: 10,
+    backgroundColor: "#ddd",
+    borderRadius: 5,
+  },
+  progressBar: {
+    backgroundColor: "#FDBD10",
+    height: "100%",
+    borderRadius: 5,
+  },
+  sectionTitle: {
+    color: "#6B3F27",
+    marginTop: 0,
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  progressText: {
+    textAlign: "right",
+    fontSize: 14,
+    color: "#999",
+    marginTop: 5,
+  },
+  mainTitle: {
+    color: "#6B3F27",
+    borderBottomWidth: 2,
+    borderBottomColor: "#FDBD10",
+    paddingBottom: 10,
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  businessHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  businessIcon: {
+    fontSize: 24,
+  },
+  businessName: {
+    color: "#6B3F27",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  businessDescription: {
+    color: "#666",
+  },
+  businessStats: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 15,
+  },
+  businessStat: {
+    margin: 5,
+    color: "#6B3F27",
+  },
+  bold: {
+    fontWeight: "bold",
+  },
+  skillsContainer: {
+    marginBottom: 15,
+    flexDirection: "row",
+    flexWrap: "wrap",
+  },
+  buttonContainer: {
+    alignItems: "center",
+  },
+  currentBusinessContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 15,
+  },
+  currentBusinessIcon: {
+    fontSize: 40,
+  },
+  currentBusinessText: {
+    color: "#6B3F27",
+    fontSize: 16,
+  },
+  highlight: {
+    color: "#FDBD10",
+    fontWeight: "bold",
+  },
+  eventDescription: {
+    color: "#666",
+    fontSize: 16,
+    marginBottom: 20,
+  },
+  eventOptions: {
+    gap: 10,
+  },
+  nextWeekContainer: {
+    alignItems: "center",
+    marginTop: 20,
+  },
+});

@@ -8,7 +8,7 @@ export default function FinanceIntroLanding() {
   const router = useRouter();
 
   const handleStartCourse = () => {
-    router.push("/courses/levelorg");
+    router.push("/courses/finance-skills");
   };
 
   return (

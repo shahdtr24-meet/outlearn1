@@ -2,10 +2,12 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from 'expo-router';
 import { AuthProvider } from '../../hooks/useAuth';
 import colors from '../colors';
+import AppTutorial from '../components/AppTutorial';
 
 export default function TabLayout() {
   return (
     <AuthProvider>
+      <AppTutorial />
       <Tabs
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {

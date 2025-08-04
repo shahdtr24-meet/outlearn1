@@ -1,5 +1,6 @@
-import { AlertTriangle, ArrowLeft, DollarSign, Gamepad2, Home, UtensilsCrossed } from "lucide-react";
 import { useState } from "react";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Icon from 'react-native-vector-icons/Feather';
 
 const MONTHLY_INCOME = 5000;
 
@@ -13,11 +14,11 @@ const SAMPLE_EXPENSES = [
 
 const getCategoryIcon = (category) => {
   switch (category) {
-    case "rent": return <Home size={24} />;
-    case "food": return <UtensilsCrossed size={24} />;
-    case "entertainment": return <Gamepad2 size={24} />;
-    case "emergency": return <AlertTriangle size={24} />;
-    default: return <DollarSign size={24} />;
+    case "rent": return <Icon name="home" size={24} />;
+    case "food": return <Icon name="coffee" size={24} />;
+    case "entertainment": return <Icon name="play" size={24} />;
+    case "emergency": return <Icon name="alert-triangle" size={24} />;
+    default: return <Icon name="dollar-sign" size={24} />;
   }
 };
 
@@ -74,206 +75,340 @@ export default function BudgetHero() {
   };
 
   return (
-    <div className="app-container">
-      <style>{`
-        .app-container {
-          font-family: sans-serif;
-          padding: 20px;
-          background-color: #ffffff;
-          max-width: 800px;
-          margin: 0 auto;
-        }
-        .btn {
-          padding: 10px 20px;
-          font-size: 16px;
-          cursor: pointer;
-          margin: 8px;
-          border-radius: 25px;
-          font-weight: bold;
-          transition: all 0.2s ease;
-        }
-        .btn-outline {
-          border: 2px solid #6B3F27;
-          background: transparent;
-          color: #6B3F27;
-        }
-        .btn-success { 
-          background: #FDBD10; 
-          color: white; 
-          border: none;
-        }
-        .btn-warning { 
-          border: 2px solid #FDBD10; 
-          color: #6B3F27; 
-          background: transparent;
-        }
-        .btn-danger { 
-          border: 2px solid #E74C3C; 
-          color: #E74C3C; 
-          background: transparent;
-        }
-        .card {
-          background: #fef6ed;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(107, 63, 39, 0.1);
-          padding: 20px;
-          margin-bottom: 20px;
-          border: 2px solid #6B3F27;
-        }
-        .grid { 
-          display: flex; 
-          gap: 20px; 
-          margin-bottom: 20px; 
-        }
-        .grid > div { 
-          flex: 1; 
-          text-align: center; 
-          background: #fef6ed;
-          border-radius: 12px;
-          padding: 15px;
-          border: 2px solid #6B3F27;
-        }
-        .grid > div strong {
-          font-size: 24px;
-          color: #FDBD10;
-          display: block;
-          margin-bottom: 5px;
-        }
-        .grid > div p {
-          margin: 0;
-          color: #6B3F27;
-          font-size: 14px;
-        }
-        .progress-bar {
-          height: 10px;
-          background: #ddd;
-          border-radius: 5px;
-          overflow: hidden;
-          margin-bottom: 20px;
-        }
-        .progress {
-          height: 100%;
-          background: #FDBD10;
-        }
-        .badge {
-          padding: 5px 12px;
-          border-radius: 20px;
-          font-size: 12px;
-          display: inline-block;
-          margin-top: 4px;
-          font-weight: bold;
-          color: white;
-        }
-        .badge-high { background: #E74C3C; }
-        .badge-medium { background: #FDBD10; }
-        .badge-low { background: #2ECC71; }
-      `}</style>
-
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <button 
-          onClick={() => window.history.back()} 
-          style={{ 
-            display: "flex", 
-            alignItems: "center", 
-            background: "none", 
-            border: "none", 
-            cursor: "pointer", 
-            fontSize: "16px",
-            color: "#6B3F27",
-            fontWeight: "bold"
-          }}
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity 
+          onPress={() => window.history.back()} 
+          style={styles.backButton}
         >
-          <ArrowLeft size={18} style={{ marginRight: 6 }} />
-          Back to Games
-        </button>
-        <h1 style={{ color: "#6B3F27", margin: 0 }}>Budget Hero</h1>
-      </div>
+          <Icon name="arrow-left" size={18} style={{ marginRight: 6 }} />
+          <Text style={styles.backButtonText}>Back to Games</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>Budget Hero</Text>
+      </View>
 
       {gameOver ? (
-        <div className="card">
-          <h2 style={{ color: "#6B3F27", textAlign: "center", borderBottom: "2px solid #FDBD10", paddingBottom: 10 }}>Game Complete!</h2>
-          <div style={{ textAlign: "center", marginBottom: 20 }}>
-            <div style={{ fontSize: 36, fontWeight: "bold", color: "#FDBD10" }}>{score}</div>
-            <div style={{ fontSize: 16, color: "#6B3F27" }}>Final Score</div>
-          </div>
-          <p style={{ textAlign: "center", fontSize: 18, color: "#6B3F27", marginBottom: 20 }}>{getScoreMessage()}</p>
-          <div className="grid">
-            <div>
-              <strong>₪{remainingBudget}</strong>
-              <p>Money Left</p>
-            </div>
-            <div>
-              <strong>{decisions.length}</strong>
-              <p>Decisions Made</p>
-            </div>
-          </div>
-          <div style={{ display: "flex", justifyContent: "center", gap: 15, marginTop: 20 }}>
-            <button className="btn btn-success" onClick={resetGame}>Play Again</button>
-            <button className="btn btn-outline" onClick={() => window.history.back()}>Try Another Game</button>
-          </div>
-        </div>
+        <View style={styles.card}>
+          <Text style={styles.gameOverTitle}>Game Complete!</Text>
+          <View style={styles.scoreContainer}>
+            <Text style={styles.finalScore}>{score}</Text>
+            <Text style={styles.scoreLabel}>Final Score</Text>
+          </View>
+          <Text style={styles.scoreMessage}>{getScoreMessage()}</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>₪{remainingBudget}</Text>
+              <Text style={styles.statLabel}>Money Left</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{decisions.length}</Text>
+              <Text style={styles.statLabel}>Decisions Made</Text>
+            </View>
+          </View>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity style={[styles.button, styles.buttonSuccess]} onPress={resetGame}>
+              <Text style={styles.buttonText}>Play Again</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, styles.buttonOutline]} onPress={() => window.history.back()}>
+              <Text style={styles.buttonOutlineText}>Try Another Game</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       ) : (
         <>
-          <div className="grid">
-            <div className="card"><strong>₪{remainingBudget}</strong><p>Remaining Budget</p></div>
-            <div className="card"><strong>{score}</strong><p>Score</p></div>
-            <div className="card"><strong>{currentExpenseIndex + 1}/{SAMPLE_EXPENSES.length}</strong><p>Progress</p></div>
-          </div>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>₪{remainingBudget}</Text>
+              <Text style={styles.statLabel}>Remaining Budget</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{score}</Text>
+              <Text style={styles.statLabel}>Score</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{currentExpenseIndex + 1}/{SAMPLE_EXPENSES.length}</Text>
+              <Text style={styles.statLabel}>Progress</Text>
+            </View>
+          </View>
 
-          <div className="progress-bar">
-            <div className="progress" style={{ width: `${(currentExpenseIndex / SAMPLE_EXPENSES.length) * 100}%` }} />
-          </div>
+          <View style={styles.progressBar}>
+            <View style={[styles.progress, { width: `${(currentExpenseIndex / SAMPLE_EXPENSES.length) * 100}%` }]} />
+          </View>
 
-          <div className="card">
-            <div style={{ display: "flex", alignItems: "center", marginBottom: 15 }}>
-              <div style={{ 
-                width: 50, 
-                height: 50, 
-                borderRadius: 25, 
-                backgroundColor: "#FDBD10", 
-                display: "flex", 
-                alignItems: "center", 
-                justifyContent: "center",
-                marginRight: 15
-              }}>
+          <View style={styles.card}>
+            <View style={styles.expenseHeader}>
+              <View style={styles.iconContainer}>
                 {getCategoryIcon(currentExpense.category)}
-              </div>
-              <div style={{ flex: 1 }}>
-                <h3 style={{ margin: 0, color: "#6B3F27" }}>{currentExpense.title}</h3>
-                <span className={`badge badge-${currentExpense.urgency}`} style={{ marginTop: 5 }}>
-                  {currentExpense.urgency.toUpperCase()} PRIORITY
-                </span>
-              </div>
-            </div>
+              </View>
+              <View style={styles.expenseInfo}>
+                <Text style={styles.expenseTitle}>{currentExpense.title}</Text>
+                <View style={[styles.badge, styles[`badge${currentExpense.urgency.charAt(0).toUpperCase() + currentExpense.urgency.slice(1)}`]]}>
+                  <Text style={styles.badgeText}>{currentExpense.urgency.toUpperCase()} PRIORITY</Text>
+                </View>
+              </View>
+            </View>
             
-            <p style={{ color: "#666", fontSize: 16, marginBottom: 20, lineHeight: 1.5 }}>{currentExpense.description}</p>
+            <Text style={styles.expenseDescription}>{currentExpense.description}</Text>
             
-            <div style={{ 
-              backgroundColor: "#fff", 
-              padding: 15, 
-              borderRadius: 10, 
-              marginBottom: 20, 
-              textAlign: "center",
-              border: "2px dashed #FDBD10"
-            }}>
-              <div style={{ fontSize: 14, color: "#6B3F27", marginBottom: 5 }}>EXPENSE AMOUNT</div>
-              <div style={{ fontSize: 28, fontWeight: "bold", color: "#FDBD10" }}>₪{currentExpense.amount}</div>
-            </div>
+            <View style={styles.amountContainer}>
+              <Text style={styles.amountLabel}>EXPENSE AMOUNT</Text>
+              <Text style={styles.amountValue}>₪{currentExpense.amount}</Text>
+            </View>
             
-            <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-              <button 
-                className="btn btn-success" 
-                onClick={() => handleDecision("accept")} 
+            <View style={styles.decisionButtons}>
+              <TouchableOpacity 
+                style={[styles.button, styles.buttonSuccess, remainingBudget < currentExpense.amount && styles.buttonDisabled]} 
+                onPress={() => handleDecision("accept")} 
                 disabled={remainingBudget < currentExpense.amount}
               >
-                Accept
-              </button>
-              <button className="btn btn-warning" onClick={() => handleDecision("postpone")}>Postpone</button>
-              <button className="btn btn-danger" onClick={() => handleDecision("reject")}>Reject</button>
-            </div>
-          </div>
+                <Text style={styles.buttonText}>Accept</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.button, styles.buttonWarning]} onPress={() => handleDecision("postpone")}>
+                <Text style={styles.buttonWarningText}>Postpone</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.button, styles.buttonDanger]} onPress={() => handleDecision("reject")}>
+                <Text style={styles.buttonDangerText}>Reject</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </>
       )}
-    </div>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+    padding: 20,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: "#6B3F27",
+    fontWeight: "bold",
+  },
+  title: {
+    color: "#6B3F27",
+    margin: 0,
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  card: {
+    backgroundColor: "#fef6ed",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: "#6B3F27",
+  },
+  gameOverTitle: {
+    color: "#6B3F27",
+    textAlign: "center",
+    borderBottomWidth: 2,
+    borderBottomColor: "#FDBD10",
+    paddingBottom: 10,
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  scoreContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  finalScore: {
+    fontSize: 36,
+    fontWeight: "bold",
+    color: "#FDBD10",
+  },
+  scoreLabel: {
+    fontSize: 16,
+    color: "#6B3F27",
+  },
+  scoreMessage: {
+    textAlign: "center",
+    fontSize: 18,
+    color: "#6B3F27",
+    marginBottom: 20,
+  },
+  statsGrid: {
+    flexDirection: "row",
+    gap: 20,
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "#fef6ed",
+    borderRadius: 12,
+    padding: 15,
+    borderWidth: 2,
+    borderColor: "#6B3F27",
+  },
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  statValue: {
+    fontSize: 24,
+    color: "#FDBD10",
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  statLabel: {
+    margin: 0,
+    color: "#6B3F27",
+    fontSize: 14,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 15,
+    marginTop: 20,
+  },
+  button: {
+    padding: 10,
+    paddingHorizontal: 20,
+    fontSize: 16,
+    margin: 8,
+    borderRadius: 25,
+    fontWeight: "bold",
+    alignItems: "center",
+  },
+  buttonSuccess: {
+    backgroundColor: "#FDBD10",
+  },
+  buttonOutline: {
+    borderWidth: 2,
+    borderColor: "#6B3F27",
+    backgroundColor: "transparent",
+  },
+  buttonWarning: {
+    borderWidth: 2,
+    borderColor: "#FDBD10",
+    backgroundColor: "transparent",
+  },
+  buttonDanger: {
+    borderWidth: 2,
+    borderColor: "#E74C3C",
+    backgroundColor: "transparent",
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  buttonOutlineText: {
+    color: "#6B3F27",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  buttonWarningText: {
+    color: "#6B3F27",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  buttonDangerText: {
+    color: "#E74C3C",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  progressBar: {
+    height: 10,
+    backgroundColor: "#ddd",
+    borderRadius: 5,
+    marginBottom: 20,
+  },
+  progress: {
+    height: "100%",
+    backgroundColor: "#FDBD10",
+  },
+  expenseHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  iconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#FDBD10",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 15,
+  },
+  expenseInfo: {
+    flex: 1,
+  },
+  expenseTitle: {
+    margin: 0,
+    color: "#6B3F27",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  badge: {
+    padding: 5,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    fontSize: 12,
+    marginTop: 5,
+    alignSelf: "flex-start",
+  },
+  badgeHigh: {
+    backgroundColor: "#E74C3C",
+  },
+  badgeMedium: {
+    backgroundColor: "#FDBD10",
+  },
+  badgeLow: {
+    backgroundColor: "#2ECC71",
+  },
+  badgeText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  expenseDescription: {
+    color: "#666",
+    fontSize: 16,
+    marginBottom: 20,
+    lineHeight: 24,
+  },
+  amountContainer: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#FDBD10",
+    borderStyle: "dashed",
+  },
+  amountLabel: {
+    fontSize: 14,
+    color: "#6B3F27",
+    marginBottom: 5,
+  },
+  amountValue: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#FDBD10",
+  },
+  decisionButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+});

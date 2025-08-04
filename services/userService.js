@@ -3,6 +3,57 @@ import { db } from '../firebaseConfig';
 
 export class UserService {
   /**
+   * Get user's tutorial completion status
+   */
+  static async getTutorialStatus(userId) {
+    if (!userId) throw new Error('User ID is required');
+    
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists()) {
+        return userDoc.data().completedTutorial;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting tutorial status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update user's tutorial completion status
+   */
+  static async updateTutorialStatus(userId, completed = true) {
+    if (!userId) throw new Error('User ID is required');
+    
+    try {
+      const userRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userRef);
+      
+      if (userDoc.exists()) {
+        // Update existing user document
+        await updateDoc(userRef, {
+          completedTutorial: completed,
+          lastActive: serverTimestamp(),
+        });
+      } else {
+        // Create new user document
+        await setDoc(userRef, {
+          completedTutorial: completed,
+          lastActive: serverTimestamp(),
+          points: 0,
+          streak: 1,
+          achievements: [],
+        });
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating tutorial status:', error);
+      throw error;
+    }
+  }
+  /**
    * Update user progress for a specific course
    */
   static async updateCourseProgress(userId, courseType, level) {
@@ -207,5 +258,57 @@ export class UserService {
   static async getUserStreak(userId) {
     // Always return 1 regardless of database value
     return 1;
+  }
+
+  /**
+   * Create or update user document with default values
+   */
+  static async createUserDocument(userId, userData = {}) {
+    if (!userId) throw new Error('User ID is required');
+    
+    try {
+      const userRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userRef);
+      
+      if (!userDoc.exists()) {
+        // Create new user document with default values
+        await setDoc(userRef, {
+          points: 0,
+          level: 1,
+          streak: 1,
+          achievements: [],
+          completedTutorial: false,
+          lastActive: serverTimestamp(),
+          createdAt: serverTimestamp(),
+          ...userData,
+        });
+        
+        return { success: true, created: true };
+      }
+      
+      return { success: true, created: false };
+    } catch (error) {
+      console.error('Error creating user document:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Reset tutorial for existing users
+   */
+  static async resetTutorial(userId) {
+    if (!userId) throw new Error('User ID is required');
+    
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        completedTutorial: false,
+        lastActive: serverTimestamp(),
+      });
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error resetting tutorial:', error);
+      throw error;
+    }
   }
 }

@@ -6,6 +6,7 @@ const colors = {
   card: "#fef6ed", // Light cream background for cards - Updated to match rate page
   text: "#6B3F27", // Dark Brown for text
   textLight: "#999999",
+  textSecondary: "#666666", // Added for subtitle text
   success: "#2ecc71",
   border: "#6B3F27", // Dark Brown for borders - Updated to match rate page
   blue: "#72AEE6", // Sky Blue for highlights

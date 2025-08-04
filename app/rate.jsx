@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 
 const FeedbackScreen = () => {
   const [selectedRating, setSelectedRating] = useState(0);
@@ -9,7 +10,7 @@ const FeedbackScreen = () => {
       level: 2,
       stars: 4,
       comment:
-        "I like the community idea and overall that’s a great app. I would maybe just add a button for a profile edit but really that’s a great app",
+        "I like the community idea and overall that's a great app. I would maybe just add a button for a profile edit but really that's a great app",
     },
     {
       name: "BLAHBLAH123",
@@ -44,213 +45,227 @@ const FeedbackScreen = () => {
   };
 
   return (
-    <div style={styles.container}>
+    <View style={styles.container}>
       {/* Header */}
-      <div style={styles.header}>
-        <div style={styles.profile}>
-          <div style={styles.avatar}></div>
-          <div style={styles.username}>
-            <strong>user</strong>
-            <div style={{ fontSize: "0.7rem", color: "#fff" }}>Level</div>
-          </div>
-        </div>
-        <div style={styles.points}>
-           <span>0</span>
-        </div>
-      </div>
+      <View style={styles.header}>
+        <View style={styles.profile}>
+          <View style={styles.avatar}></View>
+          <View style={styles.username}>
+            <Text style={styles.usernameText}>user</Text>
+            <Text style={styles.levelText}>Level</Text>
+          </View>
+        </View>
+        <View style={styles.points}>
+           <Text style={styles.pointsText}>0</Text>
+        </View>
+      </View>
 
       {/* Rating Section */}
-      <div style={styles.ratingContainer}>
-        <h2 style={styles.ratingTitle}>RATE US!</h2>
-        <div style={styles.starsRow}>
+      <View style={styles.ratingContainer}>
+        <Text style={styles.ratingTitle}>RATE US!</Text>
+        <View style={styles.starsRow}>
           {[...Array(5)].map((_, idx) => (
-            <span
+            <TouchableOpacity
               key={idx}
-              style={{
-                ...styles.star,
-                color: idx < selectedRating ? "#FDBD10" : "#ccc",
-                cursor: "pointer",
-              }}
-              onClick={() => handleStarClick(idx)}
+              onPress={() => handleStarClick(idx)}
             >
-              ★
-            </span>
+              <Text style={[
+                styles.star,
+                { color: idx < selectedRating ? "#FDBD10" : "#ccc" }
+              ]}>
+                ★
+              </Text>
+            </TouchableOpacity>
           ))}
-        </div>
-        <input
+        </View>
+        <TextInput
           placeholder="Write us feedback..."
           value={feedbackText}
-          onChange={(e) => setFeedbackText(e.target.value)}
+          onChangeText={setFeedbackText}
           style={styles.input}
+          multiline
         />
-        <button onClick={handleSubmit} style={styles.submitBtn}>
-          Submit
-        </button>
-      </div>
+        <TouchableOpacity onPress={handleSubmit} style={styles.submitBtn}>
+          <Text style={styles.submitBtnText}>Submit</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* Feedback List */}
-      <div style={styles.reviewList}>
+      <ScrollView style={styles.reviewList}>
         {reviews.map((review, idx) => (
-          <div key={idx} style={styles.reviewItem}>
-            <div style={styles.reviewHeader}>
-              <strong>{review.name}</strong>{" "}
-              <span style={styles.level}>Level {review.level}</span>
-              <div style={styles.reviewStars}>
-                {"★".repeat(review.stars)}
-                {"☆".repeat(5 - review.stars)}
-              </div>
-            </div>
+          <View key={idx} style={styles.reviewItem}>
+            <View style={styles.reviewHeader}>
+              <Text style={styles.reviewName}>{review.name}</Text>
+              <Text style={styles.level}>Level {review.level}</Text>
+              <View style={styles.reviewStars}>
+                <Text style={styles.starsText}>
+                  {"★".repeat(review.stars)}
+                  {"☆".repeat(5 - review.stars)}
+                </Text>
+              </View>
+            </View>
             {review.comment && (
-              <p style={styles.reviewText}>{review.comment}</p>
+              <Text style={styles.reviewText}>{review.comment}</Text>
             )}
-          </div>
+          </View>
         ))}
-      </div>
+      </ScrollView>
 
       {/* Bottom Navbar */}
-      <div style={styles.navbar}>
-        <span style={styles.navIcon}>🔲</span>
-        <span style={styles.navIcon}>✏️</span>
-        <span style={styles.navIcon}>👥</span>
-        <span style={styles.navIcon}>🏅</span>
-      </div>
-    </div>
+      <View style={styles.navbar}>
+        <Text style={styles.navIcon}>🔲</Text>
+        <Text style={styles.navIcon}>✏️</Text>
+        <Text style={styles.navIcon}>👥</Text>
+        <Text style={styles.navIcon}>🏅</Text>
+      </View>
+    </View>
   );
 };
 
-const styles = {
+const styles = StyleSheet.create({
   container: {
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
     backgroundColor: "#fff",
-    minHeight: "100vh",
-    display: "flex",
-    flexDirection: "column",
-    paddingBottom: "70px",
+    flex: 1,
+    paddingBottom: 70,
   },
   header: {
     backgroundColor: "#FDBD10",
-    padding: "20px",
-    display: "flex",
+    padding: 20,
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderBottomLeftRadius: "20px",
-    borderBottomRightRadius: "20px",
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   profile: {
-    display: "flex",
+    flexDirection: "row",
     alignItems: "center",
-    gap: "10px",
+    gap: 10,
   },
   avatar: {
-    width: "40px",
-    height: "40px",
-    borderRadius: "50%",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: "#fff",
   },
   username: {
     color: "#fff",
-    fontSize: "0.9rem",
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
+    fontSize: 14,
     fontWeight: "bold",
+  },
+  usernameText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  levelText: {
+    fontSize: 11,
+    color: "#fff",
   },
   points: {
     color: "#fff",
-    fontSize: "1.2rem",
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
+    fontSize: 19,
+    fontWeight: "bold",
+  },
+  pointsText: {
+    color: "#fff",
+    fontSize: 19,
     fontWeight: "bold",
   },
   ratingContainer: {
-    padding: "20px",
-    textAlign: "center",
+    padding: 20,
+    alignItems: "center",
   },
   ratingTitle: {
     color: "#FDBD10",
-    marginBottom: "10px",
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
+    marginBottom: 10,
     fontWeight: "bold",
-    fontSize: "1.5rem",
+    fontSize: 24,
   },
   starsRow: {
-    fontSize: "1.5rem",
-    marginBottom: "15px",
+    fontSize: 24,
+    marginBottom: 15,
+    flexDirection: "row",
   },
   star: {
-    margin: "0 4px",
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
+    marginHorizontal: 4,
+    fontSize: 24,
   },
   input: {
     width: "90%",
-    padding: "10px",
-    borderRadius: "25px",
-    border: "2px solid #6B3F27",
-    fontSize: "1rem",
-    marginBottom: "10px",
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
+    padding: 10,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: "#6B3F27",
+    fontSize: 16,
+    marginBottom: 10,
   },
   submitBtn: {
     backgroundColor: "#FDBD10",
-    border: "none",
-    borderRadius: "25px",
-    padding: "10px 20px",
+    borderRadius: 25,
+    padding: 10,
+    paddingHorizontal: 20,
+  },
+  submitBtnText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: "1rem",
-    cursor: "pointer",
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
+    fontSize: 16,
   },
   reviewList: {
-    padding: "20px",
-    flexGrow: 1,
-    overflowY: "auto",
+    padding: 20,
+    flex: 1,
   },
   reviewItem: {
-    border: "2px solid #6B3F27",
-    borderRadius: "30px",
-    padding: "15px",
-    marginBottom: "15px",
+    borderWidth: 2,
+    borderColor: "#6B3F27",
+    borderRadius: 30,
+    padding: 15,
+    marginBottom: 15,
     backgroundColor: "#fef6ed",
   },
   reviewHeader: {
-    display: "flex",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     flexWrap: "wrap",
-    marginBottom: "5px",
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
+    marginBottom: 5,
+    fontWeight: "bold",
+  },
+  reviewName: {
     fontWeight: "bold",
   },
   level: {
     color: "#6B3F27",
-    fontSize: "0.8rem",
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
+    fontSize: 13,
   },
   reviewStars: {
     color: "#72AEE6",
-    fontSize: "1.1rem",
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
+    fontSize: 18,
+  },
+  starsText: {
+    color: "#72AEE6",
+    fontSize: 18,
   },
   reviewText: {
-    fontSize: "0.9rem",
+    fontSize: 14,
     color: "#333",
-    marginTop: "5px",
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
+    marginTop: 5,
   },
   navbar: {
-    position: "fixed",
+    position: "absolute",
     bottom: 0,
     left: 0,
-    width: "100%",
+    right: 0,
     backgroundColor: "#FDBD10",
-    padding: "10px 0",
-    display: "flex",
+    padding: 10,
+    flexDirection: "row",
     justifyContent: "space-around",
-    borderTopLeftRadius: "20px",
-    borderTopRightRadius: "20px",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   navIcon: {
-    fontSize: "1.5rem",
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
+    fontSize: 24,
   },
-};
+});
 
 export default FeedbackScreen;

@@ -1,7 +1,7 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -10,12 +10,14 @@ import Animated, {
   withTiming
 } from 'react-native-reanimated';
 import { useAuth } from '../hooks/useAuth';
+import { useTutorial } from '../hooks/useTutorial';
 import { UserService } from '../services/userService';
 import colors from './colors';
 
 export default function ProfileScreen() {
   
   const { user, userProfile, loading } = useAuth();
+  const { forceShowTutorial } = useTutorial();
   const [streak, setStreak] = useState(0);
   const [loadingStreak, setLoadingStreak] = useState(true);
   const [stats, setStats] = useState([]);
@@ -88,7 +90,7 @@ export default function ProfileScreen() {
                 const date = achievement.earnedAt?.toDate ? 
                   achievement.earnedAt.toDate().toLocaleDateString() : 
                   'Recent';
-                  s
+                
                 return {
                   id: String(index + 2),
                   title: achievement.title || 'Achievement',
@@ -122,7 +124,6 @@ export default function ProfileScreen() {
           setAchievements([
             welcomeAchievement,
             { id: "2", title: "First Login", icon: "emoji-events", date: "Recent" },
-           
           ]);
         } finally {
           setLoadingStreak(false);
@@ -181,25 +182,6 @@ export default function ProfileScreen() {
     transform: [{ scale: badgeOpacity.value }]
   }));
 
-  // Helper function to create circular progress for goals
-  const renderCircularProgress = (progress, size = 60) => {
-    const radius = (size - 6) / 2;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (progress / 100) * circumference;
-    
-    return (
-      <View style={[styles.circularProgress, { width: size, height: size }]}>
-        <View style={styles.progressBackground} />
-        <View style={[styles.progressForeground, { 
-          transform: [{ rotate: `${(progress / 100) * 360}deg` }] 
-        }]} />
-        <View style={styles.progressCenter}>
-          <Text style={styles.progressPercentage}>{progress}%</Text>
-        </View>
-      </View>
-    );
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -213,7 +195,7 @@ export default function ProfileScreen() {
           <MaterialIcons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Profile</Text>
-        <View style={{ width: 24 }} /> {/* Empty view for alignment */}
+        <View style={{ width: 24 }} />
       </View>
       
       <ScrollView 
@@ -253,7 +235,7 @@ export default function ProfileScreen() {
                   <Animated.View style={streakAnimatedStyle}>
                     <MaterialIcons name="local-fire-department" size={32} color={colors.primary} />
                   </Animated.View>
-                  <Text style={styles.statValue}>{1}</Text>
+                  <Text style={styles.statValue}>{streak}</Text>
                 </View>
               )}
               <Text style={styles.statSubtext}>login streak</Text>
@@ -320,49 +302,88 @@ export default function ProfileScreen() {
         </View>
         
         {/* Achievements Section */}
-       <View style={styles.section}>
-  <View style={styles.sectionHeader}>
-    <MaterialIcons name="emoji-events" size={24} color={colors.primary} />
-    <Text style={styles.sectionTitle}>Achievements</Text>
-  </View>
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <MaterialIcons name="emoji-events" size={24} color={colors.primary} />
+            <Text style={styles.sectionTitle}>Achievements</Text>
+          </View>
 
-  {loading ? (
-    <ActivityIndicator size="large" color={colors.primary} style={styles.loadingIndicator} />
-  ) : (
-    <View style={styles.circularItemsContainer}>
-      {achievements.length > 0 ? (
-        achievements.map((achievement, index) => (
-          <Animated.View 
-            key={achievement.id} 
-            style={[
-              styles.circularGoalCard, // Reuse goal card styling
-              badgeAnimatedStyle, 
-              { animationDelay: index * 100 }
-            ]}
-          >
-            {/* Shared circular icon container */}
-            <View style={styles.circularProgressContainer}>
-              <View style={styles.circularProgressBackground} />
-              <View style={styles.circularProgressCenter}>
-                <MaterialIcons name={achievement.icon} size={20} color={colors.primary} />
-              </View>
-              {/* Optional special badge */}
-              {achievement.isSpecial && (
-                <View style={styles.specialBadge}>
-                  <MaterialIcons name="star" size={12} color={colors.primary} />
-                </View>
+          {loading ? (
+            <ActivityIndicator size="large" color={colors.primary} style={styles.loadingIndicator} />
+          ) : (
+            <View style={styles.circularItemsContainer}>
+              {achievements.length > 0 ? (
+                achievements.map((achievement, index) => (
+                  <Animated.View 
+                    key={achievement.id} 
+                    style={[
+                      styles.circularGoalCard,
+                      badgeAnimatedStyle, 
+                      { animationDelay: index * 100 }
+                    ]}
+                  >
+                    <View style={styles.circularProgressContainer}>
+                      <View style={styles.circularProgressBackground} />
+                      <View style={styles.circularProgressCenter}>
+                        <MaterialIcons name={achievement.icon} size={20} color={colors.primary} />
+                      </View>
+                      {achievement.isSpecial && (
+                        <View style={styles.specialBadge}>
+                          <MaterialIcons name="star" size={12} color={colors.primary} />
+                        </View>
+                      )}
+                    </View>
+                    <Text style={styles.circularProgressPercentage}>{achievement.date}</Text>
+                    <Text style={styles.circularItemTitle}>{achievement.title}</Text>
+                  </Animated.View>
+                ))
+              ) : (
+                <Text style={styles.emptyStateText}>Complete activities to earn achievements!</Text>
               )}
             </View>
-            <Text style={styles.circularProgressPercentage}>{achievement.date}</Text>
-            <Text style={styles.circularItemTitle}>{achievement.title}</Text>
-          </Animated.View>
-        ))
-      ) : (
-        <Text style={styles.emptyStateText}>Complete activities to earn achievements!</Text>
-      )}
-    </View>
-  )}
+          )}
+        </View>
 
+        {/* Settings Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <MaterialIcons name="settings" size={24} color={colors.primary} />
+            <Text style={styles.sectionTitle}>Settings</Text>
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={async () => {
+              if (user?.uid) {
+                try {
+                  await UserService.resetTutorial(user.uid);
+                  Alert.alert('Success', 'Tutorial has been reset. You will see it again on your next app launch.');
+                } catch (error) {
+                  Alert.alert('Error', 'Failed to reset tutorial. Please try again.');
+                }
+              }
+            }}
+          >
+            <View style={styles.settingItemContent}>
+              <MaterialIcons name="help-outline" size={24} color={colors.primary} />
+              <Text style={styles.settingItemText}>Reset Tutorial</Text>
+            </View>
+            <MaterialIcons name="arrow-forward-ios" size={16} color={colors.textLight} />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.settingItem}
+            onPress={() => {
+              forceShowTutorial();
+              router.push('/(tabs)');
+            }}
+          >
+            <View style={styles.settingItemContent}>
+              <MaterialIcons name="play-arrow" size={24} color={colors.primary} />
+              <Text style={styles.settingItemText}>Test Tutorial</Text>
+            </View>
+            <MaterialIcons name="arrow-forward-ios" size={16} color={colors.textLight} />
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -403,10 +424,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     borderWidth: 2,
     borderColor: colors.border,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 3,
   },
   profilePhotoContainer: {
@@ -508,15 +526,12 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.primary,
     paddingBottom: 5,
   },
-  // Circular Items Container
- circularItemsContainer: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  justifyContent: 'flex-start',
-  gap: 15,
-},
-
-  // Circular Goals Styles
+  circularItemsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    gap: 15,
+  },
   circularGoalCard: {
     backgroundColor: 'white',
     borderRadius: 20,
@@ -527,10 +542,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderWidth: 2,
     borderColor: colors.border,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
     elevation: 3,
   },
   circularProgressContainer: {
@@ -574,48 +586,6 @@ const styles = StyleSheet.create({
     color: colors.primary,
     marginBottom: 5,
   },
-  // Circular Achievements Styles
-  circularAchievementCard: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 15,
-    alignItems: 'center',
-    width: '30%',
-    minWidth: 100,
-    marginBottom: 15,
-    borderWidth: 2,
-    borderColor: colors.border,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  specialAchievementCard: {
-    borderColor: colors.primary,
-    borderWidth: 3,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  circularAchievementIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-    borderWidth: 3,
-    borderColor: 'rgba(253, 189, 16, 0.3)',
-    position: 'relative',
-  },
-  specialAchievementIcon: {
-    backgroundColor: '#4CAF50', // Green for special achievement
-    borderColor: '#81C784',
-  },
   specialBadge: {
     position: 'absolute',
     top: -5,
@@ -629,7 +599,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.primary,
   },
-  // Shared Circular Item Styles
   circularItemTitle: {
     fontSize: 11,
     fontWeight: 'bold',
@@ -638,12 +607,6 @@ const styles = StyleSheet.create({
     marginBottom: 3,
     lineHeight: 14,
   },
-  circularItemDate: {
-    fontSize: 9,
-    color: colors.textLight,
-    textAlign: 'center',
-  },
-  // Original Stats Section
   statItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -687,5 +650,26 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginVertical: 20,
     fontSize: 14,
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(107, 63, 39, 0.1)',
+    marginBottom: 10,
+  },
+  settingItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  settingItemText: {
+    fontSize: 16,
+    color: colors.text,
+    marginLeft: 12,
+    fontWeight: '500',
   },
 });

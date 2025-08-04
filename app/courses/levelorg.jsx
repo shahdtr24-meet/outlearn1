@@ -1,28 +1,26 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
-  Dimensions,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Dimensions,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
+import colors from '../colors';
 import ProfileHeader from '../components/ProfileHeader';
 
 const { width } = Dimensions.get('window');
 
 export default function Course() {
-  // Level progress state - you can modify this based on user's actual progress
-  // completed: user has finished this level
-  // unlocked: level is available to play
-  // locked: level is not yet available
+  // Level progress state
   const levels = [
-    { id: 1, status: 'completed', type: 'coins' }, // First level is always unlocked
-    { id: 2, status: 'unlocked', type: 'coins' },   // Unlocked because level 1 is completed
-    { id: 3, status: 'locked', type: 'coins' },     // Locked because level 2 not completed
-    { id: 4, status: 'locked', type: 'coins' },     // Locked because level 3 not completed
+    { id: 1, status: 'completed', type: 'start' },
+    { id: 2, status: 'unlocked', type: 'middle' },
+    { id: 3, status: 'locked', type: 'middle' },
+    { id: 4, status: 'locked', type: 'end' },
   ];
 
   const navigateToLevel = (levelNumber, status) => {
@@ -50,92 +48,130 @@ export default function Course() {
     switch (level.status) {
       case 'completed':
         return (
-          <Ionicons 
-            name="checkmark-circle" 
-            size={32} 
-            color="#4CAF50" 
-          />
+          <View style={styles.levelIconContainer}>
+            <Ionicons name="checkmark-circle" size={24} color="#4CAF50" />
+          </View>
         );
       case 'unlocked':
-        if (level.type === 'coins') {
+        if (level.type === 'start') {
           return (
-            <View style={styles.coinsIcon}>
-              <View style={styles.coin1} />
-              <View style={styles.coin2} />
-              <View style={styles.coin3} />
+            <View style={styles.levelIconContainer}>
+              <Ionicons name="play-circle" size={32} color={colors.primary} />
+            </View>
+          );
+        } else if (level.type === 'end') {
+          return (
+            <View style={styles.levelIconContainer}>
+              <Ionicons name="trophy" size={28} color={colors.primary} />
+            </View>
+          );
+        } else {
+          return (
+            <View style={styles.levelIconContainer}>
+              <Ionicons name="ellipse" size={24} color={colors.primary} />
             </View>
           );
         }
-        break;
       case 'locked':
       default:
         return (
-          <Ionicons 
-            name="lock-closed" 
-            size={24} 
-            color="#7C4D33" 
-          />
+          <View style={styles.levelIconContainer}>
+            <Ionicons name="lock-closed" size={20} color={colors.border} />
+          </View>
         );
     }
   };
 
-  const getLevelCircleStyle = (status) => {
-    switch (status) {
+  const getLevelSegmentStyle = (level) => {
+    const baseStyle = [styles.levelSegment];
+    
+    switch (level.status) {
       case 'completed':
-        return [styles.levelCircle, styles.completedLevel];
+        baseStyle.push(styles.completedSegment);
+        break;
       case 'unlocked':
-        return [styles.levelCircle, styles.unlockedLevel];
+        baseStyle.push(styles.unlockedSegment);
+        break;
       case 'locked':
       default:
-        return [styles.levelCircle, styles.lockedLevel];
+        baseStyle.push(styles.lockedSegment);
+        break;
     }
+
+    return baseStyle;
+  };
+
+  const renderWigglyPath = (level, index) => {
+    // No connecting lines - levels will be positioned in zigzag pattern
+    return null;
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <ProfileHeader />
 
-      {/* Main Content */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <TouchableOpacity onPress={() => router.push('/course')}>
-          <Text style={styles.sectionTitle}> ⬅️go back</Text>
+          <Text style={styles.sectionTitle}> ⬅️ Go back to courses</Text>
         </TouchableOpacity>
 
-        {/* Learning Path */}
-        <View style={styles.pathContainer}>
+        {/* Level Journey Title */}
+        <View style={styles.gameTitleContainer}>
+          <Text style={styles.gameTitle}>Financial Learning Journey</Text>
+          <Text style={styles.gameSubtitle}>Master your financial skills step by step!</Text>
+        </View>
+
+        {/* Wiggly Level Path */}
+        <View style={styles.levelPathContainer}>
           {levels.map((level, index) => (
             <View key={level.id} style={styles.levelContainer}>
-              {/* Connecting Line */}
-              {index < levels.length - 1 && (
-                <View style={[
-                  styles.connectingLine,
-                  level.status === 'completed' ? styles.completedLine : styles.defaultLine
-                ]} />
-              )}
-              
-              {/* Level Circle */}
-              <TouchableOpacity
-                style={getLevelCircleStyle(level.status)}
-                onPress={() => navigateToLevel(level.id, level.status)}
-                activeOpacity={level.status !== 'locked' ? 0.7 : 1}
-              >
-                {renderLevelIcon(level)}
-              </TouchableOpacity>
+                             {/* Level Segment */}
+               <TouchableOpacity
+                 style={[
+                   getLevelSegmentStyle(level),
+                   index % 2 === 0 ? styles.levelRight : styles.levelLeft
+                 ]}
+                 onPress={() => navigateToLevel(level.id, level.status)}
+                 activeOpacity={level.status !== 'locked' ? 0.7 : 1}
+               >
+                 {renderLevelIcon(level)}
+               </TouchableOpacity>
 
-              {/* Level Number */}
-              <Text style={[
-                styles.levelNumber,
-                level.status === 'completed' && styles.completedLevelNumber,
-                level.status === 'locked' && styles.lockedLevelNumber
-              ]}>
-                Level {level.id}
-              </Text>
+              {/* Level Info */}
+              <View style={styles.levelInfo}>
+                <Text style={[
+                  styles.levelNumber,
+                  level.status === 'completed' && styles.completedLevelNumber,
+                  level.status === 'locked' && styles.lockedLevelNumber
+                ]}>
+                  Level {level.id}
+                </Text>
+                <Text style={styles.levelType}>
+                  {level.type === 'start' ? 'Getting Started' :
+                   level.type === 'end' ? 'Final Challenge' :
+                   'Learning Step'}
+                </Text>
+              </View>
             </View>
           ))}
         </View>
 
-        {/* Bottom spacing */}
+        {/* Level Progress Stats */}
+        <View style={styles.levelStats}>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>1</Text>
+            <Text style={styles.statLabel}>Completed</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>1</Text>
+            <Text style={styles.statLabel}>Unlocked</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statNumber}>2</Text>
+            <Text style={styles.statLabel}>Locked</Text>
+          </View>
+        </View>
+
         <View style={styles.bottomSpacing} />
       </ScrollView>
     </SafeAreaView>
@@ -145,116 +181,7 @@ export default function Course() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAF9',
-  },
-  header: {
-    backgroundColor: '#F5B125',
-    paddingHorizontal: 18,
-    paddingTop: 20,
-    paddingBottom: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    minHeight: 116,
-  },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  profilePicture: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
-    backgroundColor: '#F3F0EC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  profilePersonIcon: {
-    width: 50,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  personHead: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#FFC549',
-    position: 'absolute',
-    top: 8,
-  },
-  personBody: {
-    width: 28,
-    height: 20,
-    borderTopLeftRadius: 14,
-    borderTopRightRadius: 14,
-    backgroundColor: '#FFC549',
-    position: 'absolute',
-    bottom: 6,
-  },
-  profileInfo: {
-    marginLeft: 18,
-  },
-  username: {
-    fontSize: 15,
-    fontWeight: '400',
-    color: '#F3F0EC',
-    fontFamily: 'System',
-  },
-  levelText: {
-    fontSize: 8,
-    fontWeight: '400',
-    color: '#F3F0EC',
-    fontFamily: 'System',
-    marginTop: 4,
-  },
-  streakSection: {
-    alignItems: 'center',
-    paddingRight: 10,
-  },
-  streakNumber: {
-    fontSize: 13,
-    fontWeight: '400',
-    color: '#F3F0EC',
-    fontFamily: 'System',
-    marginBottom: 8,
-  },
-  flameContainer: {
-    width: 24,
-    height: 30,
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  flameMain: {
-    width: 20,
-    height: 26,
-    backgroundColor: '#F3F0EC',
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    borderBottomLeftRadius: 8,
-    borderBottomRightRadius: 8,
-    position: 'absolute',
-  },
-  flameInner: {
-    width: 12,
-    height: 16,
-    backgroundColor: '#F5B125',
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-    borderBottomLeftRadius: 4,
-    borderBottomRightRadius: 4,
-    position: 'absolute',
-    top: 5,
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -264,13 +191,31 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 17,
     fontWeight: '400',
-    color: '#5DA8E1',
+    color: colors.blue,
     textAlign: 'left',
     fontFamily: 'System',
-    marginBottom: 40,
+    marginBottom: 20,
     marginLeft: 10,
   },
-  pathContainer: {
+  gameTitleContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+    paddingVertical: 20,
+  },
+  gameTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.primary,
+    textAlign: 'center',
+    marginBottom: 8,
+    textShadow: `0px 0px 10px ${colors.primary}`,
+  },
+  gameSubtitle: {
+    fontSize: 14,
+    color: colors.textLight,
+    textAlign: 'center',
+  },
+  levelPathContainer: {
     alignItems: 'center',
     paddingVertical: 20,
   },
@@ -278,104 +223,91 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
     position: 'relative',
+    width: 300,
   },
-  connectingLine: {
-    position: 'absolute',
-    top: 74,
-    width: 4,
+  levelRight: {
+    marginLeft: 60,
+  },
+  levelLeft: {
+    marginRight: 60,
+  },
+  // Removed path-related styles since we're not using connecting lines
+  levelSegment: {
+    width: 80,
     height: 80,
-    backgroundColor: 'transparent',
-    borderLeftWidth: 3,
-    borderStyle: 'dashed',
-    zIndex: 0,
-  },
-  defaultLine: {
-    borderLeftColor: '#7C4D33',
-  },
-  completedLine: {
-    borderLeftColor: '#4CAF50',
-  },
-  levelCircle: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
+    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
+    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
+    elevation: 8,
     zIndex: 1,
-  },
-  completedLevel: {
-    backgroundColor: '#E8F5E8', // Light green background for completed
     borderWidth: 3,
-    borderColor: '#4CAF50',
   },
-  unlockedLevel: {
-    backgroundColor: '#F5B125',
+  completedSegment: {
+    backgroundColor: colors.success,
+    borderColor: colors.success,
+    boxShadow: `0px 0px 8px ${colors.success}80`,
   },
-  lockedLevel: {
-    backgroundColor: '#E0E0E0', // Gray background for locked levels
+  unlockedSegment: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+    boxShadow: `0px 0px 8px ${colors.primary}4D`,
+  },
+  lockedSegment: {
+    backgroundColor: colors.textLight,
+    borderColor: colors.border,
     opacity: 0.6,
   },
-  levelNumber: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#333',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  completedLevelNumber: {
-    color: '#4CAF50',
-    fontWeight: '600',
-  },
-  lockedLevelNumber: {
-    color: '#999',
-  },
-  coinsIcon: {
-    width: 40,
-    height: 30,
-    position: 'relative',
+  levelIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
-  coin1: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#F3F0EC',
-    position: 'absolute',
-    left: 5,
-    top: 5,
-    borderWidth: 2,
-    borderColor: '#F3F0EC',
+  levelInfo: {
+    alignItems: 'center',
+    marginTop: 12,
   },
-  coin2: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#F3F0EC',
-    position: 'absolute',
-    right: 8,
-    top: 0,
-    borderWidth: 2,
-    borderColor: '#F3F0EC',
+  levelNumber: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
   },
-  coin3: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#F3F0EC',
-    position: 'absolute',
-    left: 12,
-    bottom: 0,
-    borderWidth: 2,
-    borderColor: '#F3F0EC',
+  completedLevelNumber: {
+    color: colors.success,
+    fontWeight: 'bold',
+  },
+  lockedLevelNumber: {
+    color: colors.textLight,
+  },
+  levelType: {
+    fontSize: 12,
+    color: colors.textLight,
+    textAlign: 'center',
+  },
+  levelStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: colors.card,
+    borderRadius: 15,
+    padding: 20,
+    marginTop: 30,
+    marginHorizontal: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: colors.textLight,
   },
   bottomSpacing: {
     height: 40,
