@@ -1,11 +1,12 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from 'expo-router';
-import { AuthProvider } from '../../hooks/useAuth';
 import colors from '../colors';
+import AppTutorial from '../components/AppTutorial';
 
 export default function TabLayout() {
   return (
-    <AuthProvider>
+    <>
+      <AppTutorial />
       <Tabs
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
@@ -24,7 +25,7 @@ export default function TabLayout() {
             case 'course':
               iconName = 'school';
               break;
-            case 'games':
+            case 'lobby':
               iconName = 'sports-esports';
               break;
             default:
@@ -42,6 +43,15 @@ export default function TabLayout() {
           backgroundColor: colors.primary,
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+          elevation: 5,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
         },
         headerShown: false,
       })}
@@ -77,6 +87,6 @@ export default function TabLayout() {
         }}
       />
       </Tabs>
-    </AuthProvider>
+    </>
   );
 }

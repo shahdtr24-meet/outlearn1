@@ -3,6 +3,42 @@ import { db } from '../firebaseConfig';
 
 export class UserService {
   /**
+   * Get user's tutorial completion status
+   */
+  static async getTutorialStatus(userId) {
+    if (!userId) throw new Error('User ID is required');
+    
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists()) {
+        return userDoc.data().completedTutorial;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting tutorial status:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update user's tutorial completion status
+   */
+  static async updateTutorialStatus(userId, completed = true) {
+    if (!userId) throw new Error('User ID is required');
+    
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        completedTutorial: completed,
+        lastActive: serverTimestamp(),
+      });
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating tutorial status:', error);
+      throw error;
+    }
+  }
+  /**
    * Update user progress for a specific course
    */
   static async updateCourseProgress(userId, courseType, level) {

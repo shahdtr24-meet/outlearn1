@@ -56,6 +56,7 @@ const RegisterScreen = () => {
           achievements: [],
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString(),
+          completedTutorial: false, // Flag to show tutorial for new users
         });
       }
 

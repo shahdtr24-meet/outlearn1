@@ -156,7 +156,7 @@ export default function ProfileHeader() {
         
         <View style={styles.badgesContainer}>
           {/* Streak Badge */}
-          <Animated.View style={[styles.pointsBadge, badgeAnimatedStyle, { marginLeft: 8, backgroundColor: colors.brown }]}>
+          <Animated.View style={[styles.pointsBadge, badgeAnimatedStyle, { marginLeft: 8, backgroundColor: colors.secondary }]}>
             <Animated.View style={streakAnimatedStyle}>
               <MaterialIcons name="local-fire-department" size={20} color="white" />
             </Animated.View>
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
     backgroundColor: colors.primary,
-    fontFamily: "'Comic Sans MS', 'Bubblegum Sans', 'Nunito', sans-serif",
+    fontFamily: "'Nunito', 'Roboto', sans-serif",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -206,12 +206,17 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: "rgba(107, 63, 39, 0.3)", // Using brown color with opacity
+    backgroundColor: "rgba(44, 62, 80, 0.2)", // Using dark blue with opacity
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
     borderWidth: 2,
     borderColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   profilePhotoText: {
     fontSize: 22,
@@ -265,7 +270,7 @@ const styles = StyleSheet.create({
   },
   signOutBtn: {
     marginLeft: 16,
-    backgroundColor: colors.brown,
+    backgroundColor: colors.secondary,
     borderRadius: 20,
     padding: 6,
     shadowColor: "#000",

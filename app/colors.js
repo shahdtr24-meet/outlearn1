@@ -1,16 +1,17 @@
 const colors = {
-  primary: "#FDBD10", // Golden Yellow (LEARN color) - Changed from Sky Blue to match rate page
-  secondary: "#FDBD10", // Golden Yellow (LEARN color)
-  accent: "#FDBD10", // Golden Yellow for buttons
+  primary: "#72AEE6", // Sky Blue as primary color (replacing yellow)
+  secondary: "#FDBD10", // Golden Yellow as secondary color
+  accent: "#72AEE6", // Sky Blue for buttons
   background: "#ffffff", // White background
-  card: "#fef6ed", // Light cream background for cards - Updated to match rate page
-  text: "#6B3F27", // Dark Brown for text
-  textLight: "#999999",
+  card: "#F0F7FF", // Light blue background for cards
+  text: "#2C3E50", // Dark blue-gray for text
+  textLight: "#7F8C8D", // Lighter text color
   success: "#2ecc71",
-  border: "#6B3F27", // Dark Brown for borders - Updated to match rate page
+  border: "#BFD7ED", // Light blue for borders
   blue: "#72AEE6", // Sky Blue for highlights
-  orange: "#FDBD10", // Golden Yellow for highlights
-  brown: "#6B3F27", // Brown for some elements - Updated to match rate page
+  orange: "#FDBD10", // Golden Yellow for highlights (secondary color)
+  brown: "#6B3F27", // Brown kept for some elements
+  gradient: ["#72AEE6", "#5D9CDB"], // Gradient for modern UI elements
 };
 
 export default colors;
