@@ -1,84 +1,107 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import {
+    Animated,
+    Dimensions,
+    PanResponder,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from 'react-native';
+
+const { width, height } = Dimensions.get('window');
 
 const DragDropQuiz = () => {
   const [droppedAnswer, setDroppedAnswer] = useState(null);
   const [draggedItem, setDraggedItem] = useState(null);
   const [feedback, setFeedback] = useState({ message: '', type: '', show: false });
   const [dragOverZone, setDragOverZone] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const correctAnswer = "best alternative";
+  const dropZoneRef = useRef(null);
+  const draggedItemPosition = useRef(new Animated.ValueXY()).current;
 
   const answerOptions = [
-    { id: 1, value: "wrong choice", color: "option-brown" },
-    { id: 2, value: "best alternative", color: "option-yellow" },
-    { id: 3, value: "first option", color: "option-lightorange" },
-    { id: 4, value: "last decision", color: "option-orange" }
+    { id: 1, value: "wrong choice", color: "#92400e" },
+    { id: 2, value: "best alternative", color: "#facc15" },
+    { id: 3, value: "first option", color: "#fdba74" },
+    { id: 4, value: "last decision", color: "#fb923c" }
   ];
 
-  const handleDragStart = (e, answer) => {
-    setDraggedItem(answer);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', answer.id.toString());
-  };
+  const panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (evt, gestureState) => {
+      setIsDragging(true);
+      draggedItemPosition.setOffset({
+        x: draggedItemPosition.x._value,
+        y: draggedItemPosition.y._value,
+      });
+      draggedItemPosition.setValue({ x: 0, y: 0 });
+    },
+    onPanResponderMove: (evt, gestureState) => {
+      draggedItemPosition.setValue({ x: gestureState.dx, y: gestureState.dy });
+    },
+    onPanResponderRelease: (evt, gestureState) => {
+      setIsDragging(false);
+      draggedItemPosition.flattenOffset();
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
+      // Check if the dragged item is over the drop zone
+      if (dropZoneRef.current) {
+        dropZoneRef.current.measure((x, y, width, height, pageX, pageY) => {
+          const dropZoneCenterX = pageX + width / 2;
+          const dropZoneCenterY = pageY + height / 2;
+          const draggedItemX = gestureState.moveX;
+          const draggedItemY = gestureState.moveY;
 
-  const handleDragEnter = (e) => {
-    e.preventDefault();
-    setDragOverZone(true);
-  };
+          const distance = Math.sqrt(
+            Math.pow(draggedItemX - dropZoneCenterX, 2) +
+            Math.pow(draggedItemY - dropZoneCenterY, 2)
+          );
 
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    // Only remove drag over state if we're actually leaving the drop zone
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX;
-    const y = e.clientY;
-    
-    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-      setDragOverZone(false);
-    }
-  };
+          if (distance < 100) { // Drop zone radius
+            handleDrop();
+          }
+        });
+      }
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setDragOverZone(false);
-    
+      // Reset position
+      Animated.spring(draggedItemPosition, {
+        toValue: { x: 0, y: 0 },
+        useNativeDriver: false,
+      }).start();
+    },
+  });
+
+  const handleDrop = () => {
     if (draggedItem) {
       setDroppedAnswer(draggedItem);
       setFeedback({ message: '', type: '', show: false });
       setDraggedItem(null);
+      setDragOverZone(false);
     }
   };
 
-  const handleDroppedItemDragStart = (e) => {
+  const handleAnswerPress = (answer) => {
+    if (!droppedAnswer || droppedAnswer.id !== answer.id) {
+      setDraggedItem(answer);
+      setDragOverZone(true);
+    }
+  };
+
+  const handleDropZonePress = () => {
     if (droppedAnswer) {
-      setDraggedItem(droppedAnswer);
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', droppedAnswer.id.toString());
-    }
-  };
-
-  const handleAnswerAreaDrop = (e) => {
-    e.preventDefault();
-    // If we're dragging from the drop zone back to the answer area
-    if (draggedItem && droppedAnswer && draggedItem.id === droppedAnswer.id) {
+      // Remove the answer from drop zone
       setDroppedAnswer(null);
       setFeedback({ message: '', type: '', show: false });
     }
-    setDraggedItem(null);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedItem(null);
   };
 
   const checkAnswer = () => {
     if (!droppedAnswer) {
-      showFeedback('Please drag an answer to the blank first!', 'error');
+      showFeedback('Please select an answer first!', 'error');
       return;
     }
 
@@ -104,273 +127,266 @@ const DragDropQuiz = () => {
   };
 
   return (
-    <div className="quiz-container">
-      <style>{`
-        .quiz-container {
-          min-height: 100vh;
-          background: linear-gradient(to bottom right, #3b82f6, #9333ea);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          padding: 2rem;
-          box-sizing: border-box;
-        }
-        .quiz-box {
-          background: white;
-          border-radius: 20px;
-          box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-          max-width: 800px;
-          width: 100%;
-          overflow: hidden;
-        }
-        .quiz-header {
-          background: linear-gradient(to right, #3b82f6, #06b6d4);
-          color: white;
-          text-align: center;
-          padding: 2rem;
-        }
-        .quiz-header h1 {
-          margin: 0;
-          font-size: 2rem;
-        }
-        .quiz-body {
-          padding: 2rem;
-          background: #eff6ff;
-        }
-        .question-box {
-          background: white;
-          padding: 1.5rem;
-          border-left: 6px solid #3b82f6;
-          border-radius: 12px;
-          margin-bottom: 2rem;
-        }
-        .question-text {
-          font-size: 1.2rem;
-          line-height: 2;
-        }
-        .drop-zone {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          min-width: 150px;
-          height: 40px;
-          border: 2px dashed #ccc;
-          background: #f9f9f9;
-          margin: 0 0.5rem;
-          border-radius: 8px;
-          padding: 0 1rem;
-          transition: all 0.3s ease;
-        }
-        .drop-zone.drag-over {
-          background-color: #e0f2fe;
-          border-color: #3b82f6;
-          transform: scale(1.05);
-        }
-        .drop-zone.drop-correct {
-          border-color: #10b981;
-          background-color: #e6ffed;
-        }
-        .drop-zone.drop-incorrect {
-          border-color: #ef4444;
-          background-color: #fee2e2;
-        }
-        .dropped-option {
-          padding: 8px 12px;
-          border-radius: 8px;
-          color: white;
-          font-weight: bold;
-          cursor: grab;
-          user-select: none;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-sizing: border-box;
-        }
-        .dropped-option:active {
-          cursor: grabbing;
-        }
-        .placeholder {
-          color: #999;
-          font-size: 0.9rem;
-          user-select: none;
-        }
-        .answers-section {
-          margin-bottom: 2rem;
-        }
-        .answers-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-          gap: 1rem;
-        }
-        .answer-card {
-          padding: 1rem;
-          border-radius: 12px;
-          text-align: center;
-          font-weight: bold;
-          cursor: grab;
-          color: white;
-          transition: all 0.2s ease;
-          user-select: none;
-        }
-        .answer-card:hover:not(.used) {
-          transform: translateY(-5px);
-          box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        .answer-card:active:not(.used) {
-          cursor: grabbing;
-          transform: translateY(-2px);
-        }
-        .answer-card.used {
-          opacity: 0.3;
-          pointer-events: none;
-          transform: scale(0.95);
-        }
-        .option-brown {
-          background: linear-gradient(to right, #78350f, #92400e);
-        }
-        .option-yellow {
-          background: linear-gradient(to right, #facc15, #fde047);
-          color: #333;
-        }
-        .option-lightorange {
-          background: linear-gradient(to right, #fdba74, #fed7aa);
-          color: #333;
-        }
-        .option-orange {
-          background: linear-gradient(to right, #fb923c, #f97316);
-        }
-        .buttons {
-          text-align: center;
-          margin-bottom: 1.5rem;
-        }
-        .buttons button {
-          background: #3b82f6;
-          color: white;
-          padding: 0.8rem 1.5rem;
-          margin: 0 1rem;
-          border: none;
-          border-radius: 999px;
-          font-weight: bold;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        .buttons button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        .buttons button:hover:not(:disabled) {
-          background: #2563eb;
-          transform: translateY(-2px);
-        }
-        .feedback-box {
-          text-align: center;
-          font-weight: bold;
-          padding: 1rem;
-          border-radius: 10px;
-          animation: slideIn 0.3s ease;
-        }
-        .feedback-box.success {
-          background-color: #d1fae5;
-          color: #065f46;
-          border: 2px solid #10b981;
-        }
-        .feedback-box.error {
-          background-color: #fee2e2;
-          color: #991b1b;
-          border: 2px solid #ef4444;
-        }
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
+    <ScrollView style={styles.container}>
+      <View style={styles.quizBox}>
+        <View style={styles.quizHeader}>
+          <Text style={styles.quizTitle}>📚 FILL IN THE BLANK</Text>
+          <Text style={styles.quizSubtitle}>Tap the answers to complete the sentence</Text>
+        </View>
 
-      <div className="quiz-box">
-        <div className="quiz-header">
-          <h1>📚 FILL IN THE BLANK</h1>
-          <p>Drag the answers to complete the sentence</p>
-        </div>
-
-        <div className="quiz-body">
-          <div className="question-box">
-            <p className="question-text">
-              Opportunity cost is the value of the
-              <span
-                className={`drop-zone ${dragOverZone ? 'drag-over' : ''} ${
-                  droppedAnswer && feedback.show ? 
-                    (feedback.type === 'success' ? 'drop-correct' : 'drop-incorrect') : 
-                    ''
-                }`}
-                onDragOver={handleDragOver}
-                onDragEnter={handleDragEnter}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
+        <View style={styles.quizBody}>
+          <View style={styles.questionBox}>
+            <Text style={styles.questionText}>
+              Opportunity cost is the value of the{' '}
+              <TouchableOpacity
+                ref={dropZoneRef}
+                style={[
+                  styles.dropZone,
+                  dragOverZone && styles.dropZoneDragOver,
+                  droppedAnswer && feedback.show && 
+                    (feedback.type === 'success' ? styles.dropZoneCorrect : styles.dropZoneIncorrect)
+                ]}
+                onPress={handleDropZonePress}
+                activeOpacity={0.7}
               >
                 {droppedAnswer ? (
-                  <span
-                    className={`dropped-option ${droppedAnswer.color}`}
-                    draggable
-                    onDragStart={handleDroppedItemDragStart}
-                    onDragEnd={handleDragEnd}
-                  >
+                  <Text style={[styles.droppedOption, { backgroundColor: droppedAnswer.color }]}>
                     {droppedAnswer.value}
-                  </span>
+                  </Text>
                 ) : (
-                  <span className="placeholder">Drop answer here</span>
+                  <Text style={styles.placeholder}>Tap to select answer</Text>
                 )}
-              </span>
-              option you don't choose.
-            </p>
-          </div>
+              </TouchableOpacity>
+              {' '}option you don't choose.
+            </Text>
+          </View>
 
-          <div 
-            className="answers-section" 
-            onDragOver={(e) => e.preventDefault()} 
-            onDrop={handleAnswerAreaDrop}
-          >
-            <h2>Available Answers:</h2>
-            <div className="answers-grid">
+          <View style={styles.answersSection}>
+            <Text style={styles.answersTitle}>Available Answers:</Text>
+            <View style={styles.answersGrid}>
               {answerOptions.map(answer => {
                 const isUsed = droppedAnswer?.id === answer.id;
                 return (
-                  <div
+                  <TouchableOpacity
                     key={answer.id}
-                    className={`answer-card ${answer.color} ${isUsed ? 'used' : ''}`}
-                    draggable={!isUsed}
-                    onDragStart={(e) => !isUsed && handleDragStart(e, answer)}
-                    onDragEnd={handleDragEnd}
+                    style={[
+                      styles.answerCard,
+                      { backgroundColor: answer.color },
+                      isUsed && styles.answerCardUsed
+                    ]}
+                    onPress={() => !isUsed && handleAnswerPress(answer)}
+                    disabled={isUsed}
+                    activeOpacity={0.8}
                   >
-                    {answer.value}
-                  </div>
+                    <Text style={[
+                      styles.answerText,
+                      (answer.color === '#facc15' || answer.color === '#fdba74') && styles.answerTextDark
+                    ]}>
+                      {answer.value}
+                    </Text>
+                  </TouchableOpacity>
                 );
               })}
-            </div>
-          </div>
+            </View>
+          </View>
 
-          <div className="buttons">
-            <button onClick={checkAnswer} disabled={!droppedAnswer}>
-              Check Answer
-            </button>
-            <button onClick={resetQuiz}>Reset</button>
-          </div>
+          <View style={styles.buttons}>
+            <TouchableOpacity
+              style={[styles.button, !droppedAnswer && styles.buttonDisabled]}
+              onPress={checkAnswer}
+              disabled={!droppedAnswer}
+            >
+              <Text style={styles.buttonText}>Check Answer</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.button, styles.resetButton]} onPress={resetQuiz}>
+              <Text style={styles.buttonText}>Reset</Text>
+            </TouchableOpacity>
+          </View>
 
           {feedback.show && (
-            <div className={`feedback-box ${feedback.type}`}>
-              {feedback.message}
-            </div>
+            <Animated.View 
+              style={[
+                styles.feedbackBox,
+                feedback.type === 'success' ? styles.feedbackSuccess : styles.feedbackError
+              ]}
+            >
+              <Text style={styles.feedbackText}>{feedback.message}</Text>
+            </Animated.View>
           )}
-        </div>
-      </div>
-    </div>
+        </View>
+      </View>
+    </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#3b82f6',
+    padding: 20,
+  },
+  quizBox: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    boxShadow: '0px 10px 25px rgba(0, 0, 0, 0.2)',
+    elevation: 10,
+    overflow: 'hidden',
+    marginVertical: 20,
+  },
+  quizHeader: {
+    backgroundColor: '#3b82f6',
+    padding: 20,
+    alignItems: 'center',
+  },
+  quizTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: 'white',
+    marginBottom: 8,
+  },
+  quizSubtitle: {
+    fontSize: 16,
+    color: 'white',
+    opacity: 0.9,
+  },
+  quizBody: {
+    padding: 20,
+    backgroundColor: '#eff6ff',
+  },
+  questionBox: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderLeftWidth: 6,
+    borderLeftColor: '#3b82f6',
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  questionText: {
+    fontSize: 18,
+    lineHeight: 28,
+    color: '#333',
+  },
+  dropZone: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 150,
+    height: 40,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#ccc',
+    backgroundColor: '#f9f9f9',
+    marginHorizontal: 8,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+  },
+  dropZoneDragOver: {
+    backgroundColor: '#e0f2fe',
+    borderColor: '#3b82f6',
+    transform: [{ scale: 1.05 }],
+  },
+  dropZoneCorrect: {
+    borderColor: '#10b981',
+    backgroundColor: '#e6ffed',
+  },
+  dropZoneIncorrect: {
+    borderColor: '#ef4444',
+    backgroundColor: '#fee2e2',
+  },
+  droppedOption: {
+    padding: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  placeholder: {
+    color: '#999',
+    fontSize: 14,
+  },
+  answersSection: {
+    marginBottom: 20,
+  },
+  answersTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  answersGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  answerCard: {
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 150,
+    minHeight: 60,
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
+    elevation: 3,
+  },
+  answerCardUsed: {
+    opacity: 0.3,
+    transform: [{ scale: 0.95 }],
+  },
+  answerText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  answerTextDark: {
+    color: '#333',
+  },
+  buttons: {
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 12,
+  },
+  button: {
+    backgroundColor: '#3b82f6',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  resetButton: {
+    backgroundColor: '#6b7280',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  feedbackBox: {
+    padding: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  feedbackSuccess: {
+    backgroundColor: '#d1fae5',
+    borderWidth: 2,
+    borderColor: '#10b981',
+  },
+  feedbackError: {
+    backgroundColor: '#fee2e2',
+    borderWidth: 2,
+    borderColor: '#ef4444',
+  },
+  feedbackText: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+});
 
 export default DragDropQuiz;

@@ -1,5 +1,6 @@
-import { ArrowLeft, BarChart2, TrendingDown, TrendingUp } from "lucide-react";
 import { useState } from "react";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Icon from 'react-native-vector-icons/Feather';
 
 // Sample investment options
 const INVESTMENT_OPTIONS = [
@@ -65,33 +66,27 @@ const MARKET_EVENTS = [
 
 // UI Components
 const Card = ({ children }) => (
-  <div style={{ 
-    border: "2px solid #6B3F27", 
-    padding: 20, 
-    borderRadius: 12, 
-    margin: 10, 
-    background: "#fef6ed",
-    boxShadow: "0 2px 8px rgba(107, 63, 39, 0.1)"
-  }}>{children}</div>
+  <View style={styles.card}>{children}</View>
 );
 
-const Button = ({ onClick, children, primary }) => (
-  <button 
-    onClick={onClick} 
-    style={{ 
-      padding: "10px 20px", 
-      margin: "10px 5px", 
-      borderRadius: 25, 
-      border: primary ? "none" : "2px solid #6B3F27", 
-      background: primary ? "#FDBD10" : "transparent", 
-      color: primary ? "white" : "#6B3F27", 
-      cursor: "pointer",
-      fontWeight: "bold",
-      transition: "all 0.2s ease"
-    }}
+const Button = ({ onPress, children, primary, disabled }) => (
+  <TouchableOpacity 
+    onPress={onPress}
+    disabled={disabled}
+    style={[
+      styles.button,
+      primary && styles.buttonPrimary,
+      disabled && styles.buttonDisabled
+    ]}
   >
-    {children}
-  </button>
+    <Text style={[
+      styles.buttonText,
+      primary && styles.buttonPrimaryText,
+      !primary && styles.buttonSecondaryText
+    ]}>
+      {children}
+    </Text>
+  </TouchableOpacity>
 );
 
 const Badge = ({ type }) => {
@@ -105,18 +100,9 @@ const Badge = ({ type }) => {
   };
   
   return (
-    <span style={{ 
-      display: "inline-block", 
-      padding: "5px 12px", 
-      background: getColor(), 
-      color: "white",
-      borderRadius: "20px", 
-      margin: "2px", 
-      fontSize: "12px",
-      fontWeight: "bold"
-    }}>
-      {type.toUpperCase()}
-    </span>
+    <View style={[styles.badge, { backgroundColor: getColor() }]}>
+      <Text style={styles.badgeText}>{type.toUpperCase()}</Text>
+    </View>
   );
 };
 
@@ -193,246 +179,368 @@ export default function InvestmentChallenge() {
   };
 
   return (
-    <div className="app-container">
-      <style>{`
-        .app-container {
-  font-family: sans-serif;
-  padding: 20px;
-  background-color: #ffffff;
-  max-width: 800px;
-  margin: 0 auto;
-  height: 100vh;
-  overflow-y: auto;
-  box-sizing: border-box;
-}
-
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        }
-        .stats-container {
-          display: flex;
-          gap: 15px;
-          margin-bottom: 20px;
-        }
-        .stat-card {
-          flex: 1;
-          background: #fef6ed;
-          padding: 15px;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(107, 63, 39, 0.1);
-          text-align: center;
-          border: 2px solid #6B3F27;
-        }
-        .stat-value {
-          font-size: 24px;
-          font-weight: bold;
-          color: #FDBD10;
-        }
-        .stat-label {
-          font-size: 14px;
-          color: #6B3F27;
-        }
-        .investment-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-          gap: 15px;
-          margin-bottom: 20px;
-        }
-        .investment-card {
-          background: #fef6ed;
-          border-radius: 12px;
-          padding: 15px;
-          box-shadow: 0 2px 8px rgba(107, 63, 39, 0.1);
-          border: 2px solid #6B3F27;
-        }
-        .investment-title {
-          font-weight: bold;
-          margin-bottom: 5px;
-          font-size: 18px;
-          color: #6B3F27;
-        }
-        .investment-meta {
-          display: flex;
-          gap: 5px;
-          margin-bottom: 10px;
-        }
-        .portfolio-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 15px;
-          background: #fef6ed;
-          border-radius: 12px;
-          margin-bottom: 10px;
-          box-shadow: 0 2px 8px rgba(107, 63, 39, 0.1);
-          border: 2px solid #6B3F27;
-        }
-        .event-card {
-          background: #fef6ed;
-          border-left: 4px solid #FDBD10;
-          padding: 15px;
-          margin-bottom: 20px;
-          border-radius: 8px;
-          border: 2px solid #6B3F27;
-        }
-        .event-title {
-          font-weight: bold;
-          margin-bottom: 5px;
-          color: #6B3F27;
-        }
-        .section-title {
-          margin: 20px 0 10px;
-          font-size: 20px;
-          color: #6B3F27;
-          border-bottom: 2px solid #FDBD10;
-          padding-bottom: 5px;
-        }
-        .performance-indicator {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-        }
-        .positive {
-          color: #2ECC71;
-          font-weight: bold;
-        }
-        .negative {
-          color: #E74C3C;
-          font-weight: bold;
-        }
-      `}</style>
-
-      <div className="header">
-        <button onClick={() => window.history.back()} style={{ 
-          display: "flex", 
-          alignItems: "center", 
-          gap: "5px", 
-          background: "none", 
-          border: "none", 
-          cursor: "pointer", 
-          fontSize: "16px",
-          color: "#333"
-        }}>
-          <ArrowLeft size={18} />
-          Back to Games
-        </button>
-        <h1 style={{ margin: 0, color: "#6B3F27" }}>Investment Challenge</h1>
-      </div>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => window.history.back()} style={styles.backButton}>
+          <Icon name="arrow-left" size={18} />
+          <Text style={styles.backButtonText}>Back to Games</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>Investment Challenge</Text>
+      </View>
 
       {gameOver ? (
         <Card>
-          <h2 style={{ textAlign: "center", color: "#6B3F27" }}>Game Complete!</h2>
-          <div style={{ textAlign: "center", marginBottom: "20px" }}>
-            <div className="stat-value">₪{finalValue}</div>
-            <div className="stat-label">Final Portfolio Value</div>
-          </div>
-          <p style={{ textAlign: "center", fontSize: "18px", marginBottom: "30px" }}>
+          <Text style={styles.gameOverTitle}>Game Complete!</Text>
+          <View style={styles.finalScoreContainer}>
+            <Text style={styles.statValue}>₪{finalValue}</Text>
+            <Text style={styles.statLabel}>Final Portfolio Value</Text>
+          </View>
+          <Text style={styles.performanceMessage}>
             {getPerformanceMessage()}
-          </p>
-          <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
-            <Button primary onClick={resetGame}>Play Again</Button>
-            <Button onClick={() => window.history.back()}>Try Another Game</Button>
-          </div>
+          </Text>
+          <View style={styles.buttonContainer}>
+            <Button primary onPress={resetGame}>Play Again</Button>
+            <Button onPress={() => window.history.back()}>Try Another Game</Button>
+          </View>
         </Card>
       ) : (
         <>
-          <div className="stats-container">
-            <div className="stat-card">
-              <div className="stat-value">₪{cash}</div>
-              <div className="stat-label">Available Cash</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">₪{getTotalPortfolioValue()}</div>
-              <div className="stat-label">Portfolio Value</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{currentYear}/5</div>
-              <div className="stat-label">Year</div>
-            </div>
-          </div>
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>₪{cash}</Text>
+              <Text style={styles.statLabel}>Available Cash</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>₪{getTotalPortfolioValue()}</Text>
+              <Text style={styles.statLabel}>Portfolio Value</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{currentYear}/5</Text>
+              <Text style={styles.statLabel}>Year</Text>
+            </View>
+          </View>
 
           {marketEvent && (
-            <div className="event-card">
-              <div className="event-title">{marketEvent.title}</div>
-              <p>{marketEvent.description}</p>
-            </div>
+            <View style={styles.eventCard}>
+              <Text style={styles.eventTitle}>{marketEvent.title}</Text>
+              <Text style={styles.eventDescription}>{marketEvent.description}</Text>
+            </View>
           )}
 
-          <h2 className="section-title">Available Investments</h2>
-          <div className="investment-grid">
+          <Text style={styles.sectionTitle}>Available Investments</Text>
+          <View style={styles.investmentGrid}>
             {INVESTMENT_OPTIONS.map(option => (
-              <div key={option.id} className="investment-card">
-                <div className="investment-title">{option.name}</div>
-                <div className="investment-meta">
+              <View key={option.id} style={styles.investmentCard}>
+                <Text style={styles.investmentTitle}>{option.name}</Text>
+                <View style={styles.investmentMeta}>
                   <Badge type={option.risk} /> 
-                  <span style={{ fontSize: "14px", color: "#666" }}>Risk</span>
-                </div>
-                <div className="investment-meta">
+                  <Text style={styles.metaLabel}>Risk</Text>
+                </View>
+                <View style={styles.investmentMeta}>
                   <Badge type={option.potentialReturn} /> 
-                  <span style={{ fontSize: "14px", color: "#666" }}>Return</span>
-                </div>
-                <p style={{ fontSize: "14px", color: "#666", marginBottom: "15px" }}>
+                  <Text style={styles.metaLabel}>Return</Text>
+                </View>
+                <Text style={styles.investmentDescription}>
                   {option.description}
-                </p>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ fontWeight: "bold" }}>₪{option.minInvestment}</div>
+                </Text>
+                <View style={styles.investmentFooter}>
+                  <Text style={styles.investmentAmount}>₪{option.minInvestment}</Text>
                   <Button 
                     primary 
-                    onClick={() => handleInvest(option)}
+                    onPress={() => handleInvest(option)}
                     disabled={cash < option.minInvestment}
                   >
                     Invest
                   </Button>
-                </div>
-              </div>
+                </View>
+              </View>
             ))}
-          </div>
+          </View>
 
           {portfolio.length > 0 && (
             <>
-              <h2 className="section-title">Your Portfolio</h2>
+              <Text style={styles.sectionTitle}>Your Portfolio</Text>
               {portfolio.map(investment => {
                 const percentChange = ((investment.currentValue - investment.initialValue) / investment.initialValue) * 100;
                 const isPositive = percentChange >= 0;
                 
                 return (
-                  <div key={investment.id} className="portfolio-item">
-                    <div>
-                      <div style={{ fontWeight: "bold" }}>{investment.option.name}</div>
+                  <View key={investment.id} style={styles.portfolioItem}>
+                    <View>
+                      <Text style={styles.portfolioName}>{investment.option.name}</Text>
                       <Badge type={investment.option.risk} />
-                    </div>
-                    <div>
-                      <div style={{ textAlign: "right", fontWeight: "bold" }}>₪{investment.currentValue}</div>
-                      <div className="performance-indicator">
+                    </View>
+                    <View>
+                      <Text style={styles.portfolioValue}>₪{investment.currentValue}</Text>
+                      <View style={styles.performanceIndicator}>
                         {isPositive ? (
-                          <TrendingUp size={16} className="positive" />
+                          <Icon name="trending-up" size={16} color="#2ECC71" />
                         ) : (
-                          <TrendingDown size={16} className="negative" />
+                          <Icon name="trending-down" size={16} color="#E74C3C" />
                         )}
-                        <span className={isPositive ? "positive" : "negative"}>
+                        <Text style={[styles.performanceText, isPositive ? styles.positive : styles.negative]}>
                           {isPositive ? "+" : ""}{percentChange.toFixed(1)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
                 );
               })}
             </>
           )}
 
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "30px" }}>
-            <Button primary onClick={advanceYear}>
-              <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                <BarChart2 size={16} />
-                Advance to Next Year
-              </div>
+          <View style={styles.advanceButtonContainer}>
+            <Button primary onPress={advanceYear}>
+              <View style={styles.advanceButtonContent}>
+                <Icon name="bar-chart-2" size={16} />
+                <Text style={styles.advanceButtonText}>Advance to Next Year</Text>
+              </View>
             </Button>
-          </div>
+          </View>
         </>
       )}
-    </div>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+    padding: 20,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  title: {
+    margin: 0,
+    color: "#6B3F27",
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  card: {
+    borderWidth: 2,
+    borderColor: "#6B3F27",
+    padding: 20,
+    borderRadius: 12,
+    margin: 10,
+    backgroundColor: "#fef6ed",
+  },
+  gameOverTitle: {
+    textAlign: "center",
+    color: "#6B3F27",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  finalScoreContainer: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  performanceMessage: {
+    textAlign: "center",
+    fontSize: 18,
+    marginBottom: 30,
+    color: "#6B3F27",
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 10,
+  },
+  statsContainer: {
+    flexDirection: "row",
+    gap: 15,
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: "#fef6ed",
+    padding: 15,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#6B3F27",
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#FDBD10",
+  },
+  statLabel: {
+    fontSize: 14,
+    color: "#6B3F27",
+  },
+  eventCard: {
+    backgroundColor: "#fef6ed",
+    borderLeftWidth: 4,
+    borderLeftColor: "#FDBD10",
+    padding: 15,
+    marginBottom: 20,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: "#6B3F27",
+  },
+  eventTitle: {
+    fontWeight: "bold",
+    marginBottom: 5,
+    color: "#6B3F27",
+  },
+  eventDescription: {
+    color: "#666",
+  },
+  sectionTitle: {
+    marginVertical: 20,
+    fontSize: 20,
+    color: "#6B3F27",
+    borderBottomWidth: 2,
+    borderBottomColor: "#FDBD10",
+    paddingBottom: 5,
+    fontWeight: "bold",
+  },
+  investmentGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 15,
+    marginBottom: 20,
+  },
+  investmentCard: {
+    backgroundColor: "#fef6ed",
+    borderRadius: 12,
+    padding: 15,
+    borderWidth: 2,
+    borderColor: "#6B3F27",
+    minWidth: 250,
+    flex: 1,
+  },
+  investmentTitle: {
+    fontWeight: "bold",
+    marginBottom: 5,
+    fontSize: 18,
+    color: "#6B3F27",
+  },
+  investmentMeta: {
+    flexDirection: "row",
+    gap: 5,
+    marginBottom: 10,
+    alignItems: "center",
+  },
+  metaLabel: {
+    fontSize: 14,
+    color: "#666",
+  },
+  investmentDescription: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 15,
+  },
+  investmentFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  investmentAmount: {
+    fontWeight: "bold",
+    fontSize: 16,
+    color: "#6B3F27",
+  },
+  portfolioItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 15,
+    backgroundColor: "#fef6ed",
+    borderRadius: 12,
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: "#6B3F27",
+  },
+  portfolioName: {
+    fontWeight: "bold",
+    fontSize: 16,
+    color: "#6B3F27",
+    marginBottom: 5,
+  },
+  portfolioValue: {
+    textAlign: "right",
+    fontWeight: "bold",
+    fontSize: 16,
+    color: "#6B3F27",
+  },
+  performanceIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  performanceText: {
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  positive: {
+    color: "#2ECC71",
+  },
+  negative: {
+    color: "#E74C3C",
+  },
+  advanceButtonContainer: {
+    alignItems: "center",
+    marginTop: 30,
+  },
+  advanceButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  advanceButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  button: {
+    padding: 10,
+    paddingHorizontal: 20,
+    margin: 5,
+    borderRadius: 25,
+    fontWeight: "bold",
+    alignItems: "center",
+  },
+  buttonPrimary: {
+    backgroundColor: "#FDBD10",
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  buttonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  buttonPrimaryText: {
+    color: "white",
+  },
+  buttonSecondaryText: {
+    color: "#6B3F27",
+  },
+  badge: {
+    padding: 5,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    margin: 2,
+  },
+  badgeText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+});

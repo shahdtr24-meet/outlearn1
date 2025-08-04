@@ -54,6 +54,8 @@ const RegisterScreen = () => {
           financeProgress: [],
           completedCourses: [],
           achievements: [],
+          completedTutorial: false, // New users should see the tutorial
+          streak: 1,
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString(),
           completedTutorial: false, // Flag to show tutorial for new users

@@ -1,359 +1,471 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { Animated, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
 
 export default function Level2Rome() {
-  const [showLevel2, setShowLevel2] = useState(false);
-  const [showRome, setShowRome] = useState(false);
   const [particles, setParticles] = useState([]);
+  const [showLevel2, setShowLevel2] = useState(true);
+  const [showRome, setShowRome] = useState(true);
+  
+  // Animation values - start visible
+  const level2Animation = new Animated.Value(1);
+  const romeAnimation = new Animated.Value(1);
+  const separatorAnimation = new Animated.Value(1);
+  const backButtonAnimation = new Animated.Value(1);
+  const particleAnimation = new Animated.Value(0);
 
   useEffect(() => {
-    // Trigger animations with delays
-    setTimeout(() => setShowLevel2(true), 500);
-    setTimeout(() => setShowRome(true), 2000);
-    
-    // Generate particles
-    const newParticles = Array.from({ length: 50 }, (_, i) => ({
-      id: i,
-      x: Math.random() * 100,
-      y: Math.random() * 100,
-      delay: Math.random() * 3,
-      duration: 2 + Math.random() * 3,
-    }));
+    // Create particle effects - exactly like the original HTML
+    const particleCount = 50;
+    const newParticles = [];
+    for (let i = 0; i < particleCount; i++) {
+      newParticles.push({
+        id: i,
+        x: Math.random() * width,
+        y: Math.random() * height,
+        size: Math.random() * 4 + 1,
+        speed: Math.random() * 2 + 0.5,
+        opacity: Math.random() * 0.5 + 0.3,
+      });
+    }
     setParticles(newParticles);
+
+    // Original HTML timing sequence - but start visible
+    setTimeout(() => {
+      Animated.timing(level2Animation, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: true,
+      }).start();
+    }, 500);
+
+    setTimeout(() => {
+      Animated.timing(romeAnimation, {
+        toValue: 1,
+        duration: 2500,
+        useNativeDriver: true,
+      }).start();
+    }, 2500);
+
+    // Animate separator with glow effect
+    setTimeout(() => {
+      Animated.timing(separatorAnimation, {
+        toValue: 1,
+        duration: 3000,
+        useNativeDriver: false,
+      }).start();
+    }, 1000);
+
+    // Animate back button with bounce
+    setTimeout(() => {
+      Animated.timing(backButtonAnimation, {
+        toValue: 1,
+        duration: 1500,
+        useNativeDriver: true,
+      }).start();
+    }, 3000);
+
+    // Animate particles
+    Animated.loop(
+      Animated.timing(particleAnimation, {
+        toValue: 1,
+        duration: 8000,
+        useNativeDriver: true,
+      })
+    ).start();
   }, []);
 
+  const level2Style = {
+    transform: [
+      {
+        translateY: level2Animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-200, 0],
+        }),
+      },
+      {
+        scale: level2Animation.interpolate({
+          inputRange: [0, 0.5, 1],
+          outputRange: [0.3, 1.2, 1],
+        }),
+      },
+      {
+        rotate: level2Animation.interpolate({
+          inputRange: [0, 1],
+          outputRange: ['-10deg', '0deg'],
+        }),
+      },
+    ],
+    opacity: level2Animation,
+  };
+
+  const romeStyle = {
+    transform: [
+      {
+        translateY: romeAnimation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [100, 0],
+        }),
+      },
+      {
+        scale: romeAnimation.interpolate({
+          inputRange: [0, 0.7, 1],
+          outputRange: [0.5, 1.1, 1],
+        }),
+      },
+    ],
+    opacity: romeAnimation,
+  };
+
+  const backButtonStyle = {
+    transform: [
+      {
+        translateX: backButtonAnimation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-150, 0],
+        }),
+      },
+      {
+        scale: backButtonAnimation.interpolate({
+          inputRange: [0, 0.5, 1],
+          outputRange: [0, 1.3, 1],
+        }),
+      },
+      {
+        rotate: backButtonAnimation.interpolate({
+          inputRange: [0, 1],
+          outputRange: ['-180deg', '0deg'],
+        }),
+      },
+    ],
+    opacity: backButtonAnimation,
+  };
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(45deg, #1a1a2e, #16213e, #0f3460, #e94560)',
-      backgroundSize: '400% 400%',
-      animation: 'gradientShift 8s ease infinite',
-      overflow: 'hidden',
-      position: 'relative',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-      fontFamily: 'Arial, sans-serif'
-    }}>
-      
+    <View style={styles.container}>
       {/* Animated Background Particles */}
-      {particles.map(particle => (
-        <div
+      {particles.map((particle) => (
+        <Animated.View
           key={particle.id}
-          style={{
-            position: 'absolute',
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
-            width: '4px',
-            height: '4px',
-            background: '#fff',
-            borderRadius: '50%',
-            animation: `twinkle ${particle.duration}s ease-in-out infinite`,
-            animationDelay: `${particle.delay}s`,
-            opacity: 0.7,
-          }}
+          style={[
+            styles.particle,
+            {
+              left: particle.x,
+              top: particle.y,
+              width: particle.size,
+              height: particle.size,
+              opacity: particle.opacity,
+              transform: [
+                {
+                  translateY: particleAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, -particle.speed * 100],
+                  }),
+                },
+                {
+                  scale: particleAnimation.interpolate({
+                    inputRange: [0, 0.5, 1],
+                    outputRange: [1, 1.2, 1],
+                  }),
+                },
+              ],
+            },
+          ]}
         />
       ))}
 
-      {/* Rotating Geometric Shapes */}
-      <div style={{
-        position: 'absolute',
-        width: '200px',
-        height: '200px',
-        border: '2px solid rgba(255,255,255,0.2)',
-        borderRadius: '50%',
-        animation: 'rotate 20s linear infinite',
-        top: '20%',
-        left: '10%',
-      }} />
-      
-      <div style={{
-        position: 'absolute',
-        width: '150px',
-        height: '150px',
-        border: '3px solid rgba(233, 69, 96, 0.4)',
-        transform: 'rotate(45deg)',
-        animation: 'counterRotate 15s linear infinite',
-        bottom: '20%',
-        right: '15%',
-      }} />
-
-      {/* Go Back Arrow */}
-      <div style={{
-        position: 'absolute',
-        top: '30px',
-        left: '30px',
-        zIndex: 20,
-        cursor: 'pointer',
-        transform: showLevel2 ? 'translateX(0) scale(1)' : 'translateX(-100px) scale(0)',
-        opacity: showLevel2 ? 1 : 0,
-        transition: 'all 1s ease-out 2s',
-      }}
-      onClick={() => router.push('/course')}
-      onMouseEnter={(e) => {
-        e.target.style.transform = 'scale(1.2) rotate(-5deg)';
-        e.target.style.filter = 'drop-shadow(0 0 20px #e94560)';
-      }}
-      onMouseLeave={(e) => {
-        e.target.style.transform = 'scale(1) rotate(0deg)';
-        e.target.style.filter = 'drop-shadow(0 0 10px rgba(233,69,96,0.5))';
-      }}>
-        <div style={{
-          width: '70px',
-          height: '70px',
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(233,69,96,0.3))',
-          borderRadius: '50%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          border: '3px solid rgba(255,255,255,0.5)',
-          backdropFilter: 'blur(10px)',
-          transition: 'all 0.3s ease',
-          filter: 'drop-shadow(0 0 15px rgba(233,69,96,0.7))',
-          animation: 'arrowPulse 3s ease-in-out infinite',
-          boxShadow: '0 0 20px rgba(233,69,96,0.4), inset 0 0 20px rgba(255,255,255,0.1)',
-        }}>
-          {/* Arrow made of multiple elements for better visibility */}
-          <div style={{
-            position: 'relative',
-            width: '30px',
-            height: '30px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            {/* Arrow shaft */}
-            <div style={{
-              width: '20px',
-              height: '4px',
-              background: 'linear-gradient(90deg, #fff, #ffd700)',
-              borderRadius: '2px',
-              boxShadow: '0 0 10px rgba(255,255,255,0.8)',
-              position: 'absolute',
-              left: '5px',
-            }} />
-            {/* Arrow head top */}
-            <div style={{
-              width: '0',
-              height: '0',
-              borderTop: '8px solid transparent',
-              borderBottom: '8px solid transparent',
-              borderRight: '12px solid #fff',
-              position: 'absolute',
-              left: '0px',
-              filter: 'drop-shadow(0 0 8px rgba(255,255,255,1))',
-            }} />
-            {/* Arrow head glow */}
-            <div style={{
-              width: '0',
-              height: '0',
-              borderTop: '10px solid transparent',
-              borderBottom: '10px solid transparent',
-              borderRight: '15px solid rgba(255,215,0,0.6)',
-              position: 'absolute',
-              left: '-2px',
-              filter: 'blur(2px)',
-            }} />
-          </div>
-        </div>
-      </div>
+      {/* Go Back Arrow with Enhanced Design */}
+      <Animated.View style={[styles.backButton, backButtonStyle]}>
+        <TouchableOpacity
+          onPress={() => router.push('/course')}
+          style={styles.backButtonTouchable}
+          activeOpacity={0.8}
+        >
+          <View style={styles.arrowContainer}>
+            <View style={styles.arrowShaft} />
+            <View style={styles.arrowHead} />
+            <View style={styles.arrowGlow} />
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
 
       {/* Main Content Container */}
-      <div style={{
-        textAlign: 'center',
-        zIndex: 10,
-        position: 'relative',
-      }}>
-        
-        {/* LEVEL 2 INCOMING */}
-        <div style={{
-          fontSize: '4rem',
-          fontWeight: 'bold',
-          color: '#fff',
-          textShadow: '0 0 20px #e94560, 0 0 40px #e94560',
-          marginBottom: '2rem',
-          transform: showLevel2 ? 'translateY(0) scale(1)' : 'translateY(-100px) scale(0.5)',
-          opacity: showLevel2 ? 1 : 0,
-          transition: 'all 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-          animation: showLevel2 ? 'pulse 2s ease-in-out infinite alternate' : 'none',
-        }}>
-          LEVEL 2
-        </div>
+      <View style={styles.mainContent}>
+        {/* LEVEL 2 INCOMING with Enhanced Effects */}
+        <Animated.View style={[styles.level2Text, level2Style]}>
+          <Text style={styles.level2TextContent}>LEVEL 2</Text>
+          <View style={styles.textGlow} />
+        </Animated.View>
 
-        <div style={{
-          fontSize: '2.5rem',
-          fontWeight: 'bold',
-          background: 'linear-gradient(45deg, #ff6b6b, #ffd93d, #6bcf7f, #4ecdc4, #45b7d1)',
-          backgroundSize: '300% 300%',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          animation: 'gradientText 3s ease infinite, bounce 1s ease-in-out infinite alternate',
-          marginBottom: '3rem',
-          transform: showLevel2 ? 'translateX(0)' : 'translateX(-200px)',
-          opacity: showLevel2 ? 1 : 0,
-          transition: 'all 1.2s ease-out 0.5s',
-        }}>
-          INCOMING
-        </div>
+        <Animated.View style={[styles.incomingText, level2Style]}>
+          <Text style={styles.incomingTextContent}>INCOMING</Text>
+          <View style={styles.incomingGlow} />
+        </Animated.View>
 
-        {/* Separator Line */}
-        <div style={{
-          width: showLevel2 ? '300px' : '0px',
-          height: '4px',
-          background: 'linear-gradient(90deg, transparent, #e94560, #fff, #e94560, transparent)',
-          margin: '0 auto 3rem auto',
-          transition: 'width 2s ease-out 1s',
-          position: 'relative',
-          overflow: 'hidden',
-        }}>
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: '-100%',
-            width: '100%',
-            height: '100%',
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent)',
-            animation: showLevel2 ? 'shimmer 2s ease-in-out infinite' : 'none',
-          }} />
-        </div>
+        {/* Enhanced Separator Line with Pulse Effect */}
+        <Animated.View style={[styles.separator, { 
+          width: separatorAnimation.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0, 400],
+          }),
+          opacity: separatorAnimation.interpolate({
+            inputRange: [0, 0.5, 1],
+            outputRange: [0, 0.8, 1],
+          }),
+        }]}>
+          <View style={styles.separatorGlow} />
+          <View style={styles.separatorPulse} />
+        </Animated.View>
 
-        {/* ROME WASN'T BUILT IN A DAY */}
-        <div style={{
-          fontSize: '1.8rem',
-          color: '#fff',
-          fontStyle: 'italic',
-          textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-          transform: showRome ? 'translateY(0) rotateX(0deg)' : 'translateY(50px) rotateX(90deg)',
-          opacity: showRome ? 1 : 0,
-          transition: 'all 1.5s ease-out',
-          perspective: '1000px',
-          marginBottom: '1rem',
-        }}>
-          ROME WASN'T BUILT
-        </div>
+        {/* ROME WASN'T BUILT IN A DAY with Typography Effects */}
+        <Animated.View style={[styles.romeText, romeStyle]}>
+          <Text style={styles.romeTextContent}>ROME WASN'T BUILT</Text>
+          <View style={styles.romeTextShadow} />
+        </Animated.View>
 
-        <div style={{
-          fontSize: '2.2rem',
-          fontWeight: 'bold',
-          background: 'linear-gradient(45deg, #ffd700, #ffed4e, #fff)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          transform: showRome ? 'scale(1) rotateY(0deg)' : 'scale(0.3) rotateY(180deg)',
-          opacity: showRome ? 1 : 0,
-          transition: 'all 1.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.5s',
-          animation: showRome ? 'glow 3s ease-in-out infinite alternate' : 'none',
-        }}>
-          IN A DAY
-        </div>
-      </div>
+        <Animated.View style={[styles.inADayText, romeStyle]}>
+          <Text style={styles.inADayTextContent}>IN A DAY</Text>
+          <View style={styles.inADayGlow} />
+        </Animated.View>
+      </View>
 
-      {/* Floating Orbs */}
-      <div style={{
-        position: 'absolute',
-        width: '60px',
-        height: '60px',
-        background: 'radial-gradient(circle, rgba(233,69,96,0.8), transparent)',
-        borderRadius: '50%',
-        top: '30%',
-        right: '20%',
-        animation: 'float 6s ease-in-out infinite',
-        filter: 'blur(1px)',
-      }} />
-      
-      <div style={{
-        position: 'absolute',
-        width: '40px',
-        height: '40px',
-        background: 'radial-gradient(circle, rgba(255,215,0,0.6), transparent)',
-        borderRadius: '50%',
-        bottom: '40%',
-        left: '25%',
-        animation: 'float 8s ease-in-out infinite reverse',
-        filter: 'blur(2px)',
-      }} />
-
-      <style>{`
-        @keyframes gradientShift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        
-        @keyframes pulse {
-          0% { transform: scale(1); }
-          100% { transform: scale(1.05); }
-        }
-        
-        @keyframes bounce {
-          0% { transform: translateY(0px); }
-          100% { transform: translateY(-10px); }
-        }
-        
-        @keyframes gradientText {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-        
-        @keyframes shimmer {
-          0% { left: -100%; }
-          100% { left: 100%; }
-        }
-        
-        @keyframes glow {
-          0% { text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700, 0 0 30px #ffd700; }
-          100% { text-shadow: 0 0 20px #ffd700, 0 0 30px #ffd700, 0 0 40px #ffd700; }
-        }
-        
-        @keyframes rotate {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
-        @keyframes counterRotate {
-          0% { transform: rotate(45deg); }
-          100% { transform: rotate(-315deg); }
-        }
-        
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) translateX(0px); }
-          25% { transform: translateY(-20px) translateX(10px); }
-          50% { transform: translateY(-10px) translateX(-10px); }
-          75% { transform: translateY(-30px) translateX(5px); }
-        }
-        
-        @keyframes twinkle {
-          0%, 100% { opacity: 0.3; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.5); }
-        }
-        
-        @keyframes arrowPulse {
-          0%, 100% { 
-            box-shadow: 0 0 15px rgba(233,69,96,0.3), inset 0 0 15px rgba(255,255,255,0.1); 
-          }
-          50% { 
-            box-shadow: 0 0 25px rgba(233,69,96,0.6), inset 0 0 25px rgba(255,255,255,0.2); 
-          }
-        }
-        
-        @media (max-width: 768px) {
-          div[style*="fontSize: '4rem'"] {
-            font-size: 2.5rem !important;
-          }
-          div[style*="fontSize: '2.5rem'"] {
-            font-size: 1.8rem !important;
-          }
-          div[style*="fontSize: '1.8rem'"] {
-            font-size: 1.3rem !important;
-          }
-          div[style*="fontSize: '2.2rem'"] {
-            font-size: 1.6rem !important;
-          }
-        }
-      `}</style>
-    </div>
+      {/* Enhanced Floating Orbs with Animation */}
+      <Animated.View style={[styles.orb1, {
+        transform: [
+          {
+            translateY: particleAnimation.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, -20],
+            }),
+          },
+          {
+            scale: particleAnimation.interpolate({
+              inputRange: [0, 0.5, 1],
+              outputRange: [1, 1.1, 1],
+            }),
+          },
+        ],
+      }]} />
+      <Animated.View style={[styles.orb2, {
+        transform: [
+          {
+            translateY: particleAnimation.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 15],
+            }),
+          },
+          {
+            scale: particleAnimation.interpolate({
+              inputRange: [0, 0.5, 1],
+              outputRange: [1, 0.9, 1],
+            }),
+          },
+        ],
+      }]} />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0a0a1a',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  particle: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 50,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 60,
+    left: 30,
+    zIndex: 20,
+  },
+  backButtonTouchable: {
+    width: 80,
+    height: 80,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+    boxShadow: '0px 0px 10px rgba(255, 255, 255, 0.5)',
+    elevation: 10,
+  },
+  arrowContainer: {
+    position: 'relative',
+    width: 35,
+    height: 35,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  arrowShaft: {
+    width: 25,
+    height: 4,
+    backgroundColor: '#fff',
+    borderRadius: 2,
+    position: 'absolute',
+    left: 5,
+    boxShadow: '0px 0px 5px rgba(255, 255, 255, 0.8)',
+  },
+  arrowHead: {
+    width: 0,
+    height: 0,
+    borderTopWidth: 10,
+    borderBottomWidth: 10,
+    borderRightWidth: 15,
+    borderTopColor: 'transparent',
+    borderBottomColor: 'transparent',
+    borderRightColor: '#fff',
+    position: 'absolute',
+    left: 0,
+    boxShadow: '0px 0px 5px rgba(255, 255, 255, 0.8)',
+  },
+  arrowGlow: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 20,
+  },
+  mainContent: {
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  level2Text: {
+    marginBottom: 25,
+    position: 'relative',
+  },
+  level2TextContent: {
+    fontSize: 56,
+    fontWeight: '900',
+    color: '#fff',
+    textShadow: '0px 0px 25px #e94560',
+    letterSpacing: 8,
+  },
+  textGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(233,69,96,0.2)',
+    borderRadius: 10,
+  },
+  incomingText: {
+    marginBottom: 40,
+    position: 'relative',
+  },
+  incomingTextContent: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#ff6b6b',
+    textShadow: '0px 0px 15px #ff6b6b',
+    letterSpacing: 4,
+  },
+  incomingGlow: {
+    position: 'absolute',
+    top: -5,
+    left: -10,
+    right: -10,
+    bottom: -5,
+    backgroundColor: 'rgba(255,107,107,0.15)',
+    borderRadius: 15,
+  },
+  separator: {
+    height: 6,
+    backgroundColor: '#e94560',
+    marginBottom: 40,
+    position: 'relative',
+    overflow: 'hidden',
+    borderRadius: 3,
+  },
+  separatorGlow: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    boxShadow: '0px 0px 10px #e94560',
+  },
+  separatorPulse: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  romeText: {
+    marginBottom: 15,
+    position: 'relative',
+  },
+  romeTextContent: {
+    fontSize: 28,
+    color: '#fff',
+    fontStyle: 'italic',
+    textShadow: '3px 3px 6px rgba(0,0,0,0.8)',
+    letterSpacing: 2,
+  },
+  romeTextShadow: {
+    position: 'absolute',
+    top: 2,
+    left: 2,
+    right: -2,
+    bottom: -2,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    borderRadius: 5,
+    zIndex: -1,
+  },
+  inADayText: {
+    marginBottom: 30,
+    position: 'relative',
+  },
+  inADayTextContent: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#ffd700',
+    textShadow: '0px 0px 15px #ffd700',
+    letterSpacing: 3,
+  },
+  inADayGlow: {
+    position: 'absolute',
+    top: -8,
+    left: -15,
+    right: -15,
+    bottom: -8,
+    backgroundColor: 'rgba(255,215,0,0.2)',
+    borderRadius: 20,
+  },
+  orb1: {
+    position: 'absolute',
+    width: 80,
+    height: 80,
+    backgroundColor: 'rgba(233,69,96,0.9)',
+    borderRadius: 40,
+    top: '25%',
+    right: '15%',
+    boxShadow: '0px 0px 20px rgba(233, 69, 96, 0.8)',
+    elevation: 15,
+  },
+  orb2: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    backgroundColor: 'rgba(255,215,0,0.8)',
+    borderRadius: 30,
+    bottom: '35%',
+    left: '20%',
+    boxShadow: '0px 0px 15px rgba(255, 215, 0, 0.8)',
+    elevation: 12,
+  },
+});
