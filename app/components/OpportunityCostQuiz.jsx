@@ -6,11 +6,14 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
+  Dimensions,
+  Platform
 } from 'react-native';
 import colors from '../colors';
 
 export default function OpportunityCostQuiz({ level, onComplete }) {
+  // State management
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [hearts, setHearts] = useState(3);
@@ -20,6 +23,11 @@ export default function OpportunityCostQuiz({ level, onComplete }) {
   const [score, setScore] = useState(0);
   const [showExplanation, setShowExplanation] = useState(false);
   const [sound, setSound] = useState();
+  
+  // Responsive design variables
+  const { width: windowWidth } = Dimensions.get('window');
+  const isTablet = windowWidth >= 768;
+  const isWeb = Platform.OS === 'web';
 
   // Load sound effects
   useEffect(() => {
@@ -940,4 +948,4 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 4,
   },
-}); 
+});

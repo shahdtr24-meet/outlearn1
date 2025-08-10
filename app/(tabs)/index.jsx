@@ -83,7 +83,7 @@ const HomePage = () => {
           gamified, interactive learning platform.
         </Text>
 
-        {/* CTA Buttons */}
+        {/* CTA Buttons */} 
         <View style={styles.buttonRow}>
           <TouchableOpacity onPress={() => router.push('/course')} style={styles.primaryButton}>
             <Icon name="play" size={18} color="#fff" />
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   hero: {
     paddingVertical: 40,
     paddingHorizontal: 20,
-    backgroundColor: '#F0F7FF',
+    backgroundColor: '#FFF',
     alignItems: 'center',
     borderRadius: 20,
     margin: 15,
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   heroHighlight: {
-    color: '#72AEE6',
+    color: '#FDBD10',
   },
   heroSubtitle: {
     fontSize: 16,
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     flexDirection: 'row',
-    backgroundColor: '#72AEE6',
+    backgroundColor: '#FDBD10',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 999,
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#72AEE6',
+    color: '#FDBD10',
   },
   statLabel: {
     fontSize: 12,

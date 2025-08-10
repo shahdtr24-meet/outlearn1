@@ -40,6 +40,7 @@ export default function GamesScreen() {
         style={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
+        
         {games.map((game) => (
           <TouchableOpacity 
             key={game.id} 
@@ -47,7 +48,7 @@ export default function GamesScreen() {
             onPress={() => router.push(game.route)}
           >
             <View style={styles.gameIconContainer}>
-              <MaterialIcons name={game.icon} size={32} color={colors.primary} />
+              <MaterialIcons name={game.icon} size={32} color={colors.secondary} />
             </View>
             <View style={styles.gameContent}>
               <Text style={styles.gameTitle}>{game.title}</Text>
@@ -87,6 +88,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   gameCard: {
+    marginTop: 16,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.card,
@@ -107,7 +109,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 16,
     borderWidth: 2,
-    borderColor: colors.primary,
+    borderColor: colors.secondary,
   },
   gameContent: {
     flex: 1,

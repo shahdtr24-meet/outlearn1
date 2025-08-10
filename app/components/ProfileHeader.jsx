@@ -3,13 +3,13 @@ import { router } from 'expo-router';
 import { signOut, updateProfile } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
+  withRepeat,
   withSequence,
   withTiming,
-  withRepeat,
 } from 'react-native-reanimated';
 import { auth, db } from '../../firebaseConfig';
 import { useAuth } from '../../hooks/useAuth';
@@ -21,6 +21,8 @@ export default function ProfileHeader() {
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [streak, setStreak] = useState(0);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [loginStats, setLoginStats] = useState([]);
 
   const displayName = userProfile?.displayName || user?.email || 'User';
   const points = userProfile?.points || 0;
@@ -35,6 +37,27 @@ export default function ProfileHeader() {
           await UserService.updateLastActive(user.uid);
           const currentStreak = await UserService.getUserStreak(user.uid);
           setStreak(currentStreak || 0);
+          
+          // Get actual login history
+          const loginHistory = await UserService.getUserLoginHistory(user.uid);
+          
+          // Convert login history to the format needed for the calendar
+          const today = new Date();
+          const stats = [];
+          
+          // Create an array of the last 30 days
+          for (let i = 0; i < 30; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+            
+            stats.push({
+              date: dateStr,
+              loggedIn: loginHistory.includes(dateStr)
+            });
+          }
+          
+          setLoginStats(stats);
         } catch (error) {
           console.error('Error updating activity:', error);
         }
@@ -122,6 +145,64 @@ export default function ProfileHeader() {
       activeOpacity={0.9}
       onPress={navigateToProfile}
     >
+      {/* Calendar Modal */}
+      <Modal
+        visible={showCalendar}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowCalendar(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowCalendar(false)}
+        >
+          <View 
+            style={styles.calendarContainer}
+            onStartShouldSetResponder={() => true}
+            onTouchEnd={(e) => e.stopPropagation()}
+          >
+            <View style={styles.calendarHeader}>
+              <Text style={styles.calendarTitle}>Login Streak</Text>
+              <TouchableOpacity onPress={() => setShowCalendar(false)}>
+                <MaterialIcons name="close" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.streakInfoContainer}>
+              <View style={styles.streakInfoItem}>
+                <MaterialIcons name="local-fire-department" size={24} color={colors.primary} />
+                <Text style={styles.streakInfoText}>Current Streak: {streak} days</Text>
+              </View>
+              <View style={styles.streakInfoItem}>
+                <MaterialIcons name="calendar-today" size={24} color={colors.primary} />
+                <Text style={styles.streakInfoText}>Last Login: Today</Text>
+              </View>
+            </View>
+            
+            <Text style={styles.calendarSubtitle}>Your Activity</Text>
+            
+            <View style={styles.calendarGrid}>
+              {loginStats.map((stat, index) => (
+                <View key={index} style={styles.calendarDay}>
+                  <View 
+                    style={[
+                      styles.dayIndicator, 
+                      stat.loggedIn ? styles.dayLoggedIn : styles.dayMissed
+                    ]}
+                  />
+                  <Text style={styles.dayText}>
+                    {new Date(stat.date).getDate()}
+                  </Text>
+                  <Text style={styles.monthText}>
+                    {new Date(stat.date).toLocaleString('default', { month: 'short' })}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
       <Animated.View style={[styles.headerContent, animatedStyle]}>
         <View style={styles.headerLeft}>
           <View style={styles.profilePhoto}>
@@ -156,12 +237,14 @@ export default function ProfileHeader() {
         
         <View style={styles.badgesContainer}>
           {/* Streak Badge */}
+        <TouchableOpacity onPress={() => setShowCalendar(true)}>
           <Animated.View style={[styles.pointsBadge, badgeAnimatedStyle, { marginLeft: 8, backgroundColor: colors.secondary }]}>
             <Animated.View style={streakAnimatedStyle}>
               <MaterialIcons name="local-fire-department" size={20} color="white" />
             </Animated.View>
             <Text style={styles.pointsText}>{streak}</Text>
           </Animated.View>
+        </TouchableOpacity>
         </View>
         
         <TouchableOpacity 
@@ -192,6 +275,94 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarContainer: {
+    width: '85%',
+    maxHeight: '80%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
+    paddingBottom: 10,
+  },
+  calendarTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  calendarSubtitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginTop: 10,
+    marginBottom: 15,
+  },
+  streakInfoContainer: {
+    backgroundColor: 'rgba(114, 174, 230, 0.1)',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 15,
+  },
+  streakInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  streakInfoText: {
+    fontSize: 14,
+    color: colors.text,
+    marginLeft: 10,
+  },
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  calendarDay: {
+    width: '13.5%', // ~7 days per row with spacing
+    aspectRatio: 0.9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  dayIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginBottom: 4,
+  },
+  dayLoggedIn: {
+    backgroundColor: colors.primary,
+  },
+  dayMissed: {
+    backgroundColor: 'rgba(200, 200, 200, 0.5)',
+  },
+  dayText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  monthText: {
+    fontSize: 9,
+    color: colors.textLight,
   },
   headerContent: {
     flexDirection: "row",
@@ -240,7 +411,7 @@ const styles = StyleSheet.create({
   },
   pointsBadge: {
     flexDirection: "row",
-    backgroundColor: colors.brown,
+    
     borderRadius: 15,
     paddingHorizontal: 12,
     paddingVertical: 6,

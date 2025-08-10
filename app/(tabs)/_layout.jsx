@@ -1,9 +1,29 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from 'expo-router';
+import { Dimensions, Platform } from 'react-native';
 import colors from '../colors';
 import AppTutorial from '../components/AppTutorial';
 
 export default function TabLayout() {
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
+  
+  // Calculate responsive dimensions
+  const getResponsiveTabBarWidth = () => {
+    // For smaller devices, use a larger percentage of the screen
+    if (windowWidth < 375) return '95%';
+    // For medium devices
+    if (windowWidth < 768) return '90%';
+    // For larger devices
+    return '80%';
+  };
+  
+ // Get numeric value without the % sign
+  const getTabBarWidthValue = () => {
+    const widthStr = getResponsiveTabBarWidth();
+    return parseInt(widthStr.replace('%', ''));
+  };
+  
   return (
     <>
       <AppTutorial />
@@ -32,26 +52,57 @@ export default function TabLayout() {
               iconName = 'dashboard';
           }
 
-          return <MaterialIcons name={iconName} size={size} color={color} />;
+          return (
+            <MaterialIcons 
+              name={iconName} 
+              size={focused ? size + 6 : size + 2} 
+              color={color} 
+              style={{
+                opacity: focused ? 1 : 0.8,
+                transform: [{ scale: focused ? 1.1 : 1 }]
+              }}
+            />
+          );
         },
         tabBarActiveTintColor: '#fff',
         tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.7)',
         tabBarStyle: {
           height: 60,
-          paddingBottom: 10,
-          paddingTop: 6,
-          backgroundColor: colors.primary,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
+          paddingBottom: 8,
+          paddingTop: 8,
+          backgroundColor: colors.brown,
+          borderRadius: 30,
           shadowColor: "#000",
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-          elevation: 5,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 8,
           position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
+          bottom: Platform.OS === 'web' ? 20 : 25,
+          left: '50%',
+          width: getResponsiveTabBarWidth(),
+          ...Platform.select({
+            web: {
+              marginLeft: `-${getTabBarWidthValue() / 2}%`,
+              boxShadow: '0px 4px 15px rgba(0, 0, 0, 0.2)',
+            },
+            default: {
+              transform: [{ translateX: -(windowWidth * getTabBarWidthValue() / 100 / 2) }],
+            },
+          }),
+        },
+        tabBarItemStyle: {
+          paddingTop: 0,
+          paddingBottom: 0,
+          justifyContent: 'center',
+          borderRadius: 20,
+          margin: 5,
+        },
+        tabBarShowLabel: false,
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+          paddingBottom: 5,
         },
         headerShown: false,
       })}

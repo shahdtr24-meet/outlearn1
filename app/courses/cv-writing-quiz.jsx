@@ -12,6 +12,8 @@ import OpportunityCostQuiz from '../components/OpportunityCostQuiz';
 import NotificationModal from '../components/NotificationModal';
 import { getLevel } from '../data/cv-writing';
 import { markLevelCompleted } from '../services/cvWritingProgress';
+import { UserService } from '../../services/userService';
+import { getAuth } from 'firebase/auth';
 
 export default function CVWritingQuizPage() {
   const { id } = useLocalSearchParams();
@@ -37,12 +39,35 @@ export default function CVWritingQuizPage() {
       // Mark the level as completed
       await markLevelCompleted(parseInt(levelId));
       
-      setNotification({
-        visible: true,
-        type: 'success',
-        title: 'Congratulations! 🎉',
-        message: `You completed Level ${levelId} with a score of ${result.score}!`,
-      });
+      // Update user progress in Firebase
+      const auth = getAuth();
+      const user = auth.currentUser;
+      
+      if (user) {
+        // Update last active and streak
+        await UserService.updateLastActive(user.uid);
+        
+        // Award XP based on level completion
+        const difficulty = parseInt(levelId);
+        const { pointsEarned, leveledUp } = await UserService.updateCourseProgress(user.uid, 'cv-writing', difficulty);
+        
+        // Get current streak
+        const streak = await UserService.getUserStreak(user.uid);
+        
+        setNotification({
+          visible: true,
+          type: 'success',
+          title: 'Congratulations! 🎉',
+          message: `You completed Level ${levelId} with a score of ${result.score}!\n\n+${pointsEarned} XP earned!${leveledUp ? '\n🎊 You leveled up! 🎊' : ''}\n🔥 Current streak: ${streak} days`,
+        });
+      } else {
+        setNotification({
+          visible: true,
+          type: 'success',
+          title: 'Congratulations! 🎉',
+          message: `You completed Level ${levelId} with a score of ${result.score}!`,
+        });
+      }
     } else {
       setNotification({
         visible: true,
@@ -130,4 +155,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 100,
   },
-}); 
+});

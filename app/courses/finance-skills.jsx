@@ -1,12 +1,12 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import colors from '../colors';
 import ProfileHeader from '../components/ProfileHeader';
@@ -70,7 +70,9 @@ export default function FinanceSkills() {
       unlocked: false,
     },
   ];
-
+const goback = ()=> {
+  router.push('/courses/finance');
+};
   const handleSkillPress = (skill) => {
     if (!skill.unlocked) {
       alert('This skill will be available soon!');
@@ -99,9 +101,10 @@ export default function FinanceSkills() {
       <ProfileHeader />
       
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <TouchableOpacity onPress={() => router.push('/courses/finance')}>
-          <Text style={styles.backButton}> ⬅️ Back to Finance Course</Text>
-        </TouchableOpacity>
+          <TouchableOpacity onPress={goback} style={styles.backButton}>
+  <MaterialIcons name="arrow-back" size={24} color={colors.text} />
+  <Text style={styles.buttonText}>Go Back</Text>
+</TouchableOpacity>
 
         <View style={styles.header}>
           <Text style={styles.title}>Choose Your Skill</Text>
@@ -162,6 +165,18 @@ export default function FinanceSkills() {
 }
 
 const styles = StyleSheet.create({
+    backButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  padding: 10,
+},
+
+buttonText: {
+  fontSize: 16,
+  marginLeft: 8,
+  color: colors.primary,
+  fontWeight: '500',
+},
   container: {
     flex: 1,
     backgroundColor: colors.background,
